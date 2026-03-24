@@ -2,7 +2,7 @@
   {
   "avion": {
     "nombre": "Avión",
-    "imagen": "avion.png",
+    "imagen": "sprites/avion.png",
     "tipo": "aire",
     "colorCielo": "#87CEEB",
     "colorFondo": "#a8e6cf",
@@ -11,7 +11,7 @@
   },
   "tren": {
     "nombre": "Tren",
-    "imagen": "tren.png",
+    "imagen": "sprites/tren.png",
     "tipo": "tierra",
     "colorCielo": "#87CEEB",
     "colorFondo": "#a8e6cf",
@@ -20,7 +20,7 @@
   },
   "barco": {
     "nombre": "Barco",
-    "imagen": "barco.png",
+    "imagen": "sprites/barco.png",
     "tipo": "agua",
     "colorCielo": "#E0F7FA",
     "colorFondo": "#0288D1",
@@ -29,7 +29,7 @@
   },
   "coche": {
     "nombre": "Coche",
-    "imagen": "coche.png",
+    "imagen": "sprites/coche.png",
     "tipo": "tierra",
     "colorCielo": "#87CEEB",
     "colorFondo": "#a8e6cf",
