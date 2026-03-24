@@ -1,0 +1,18 @@
+[
+  {
+    "archivo": "coche",
+    "nombre": "Auto"
+  },
+  {
+    "archivo": "barco",
+    "nombre": "Barco"
+  },
+  {
+    "archivo": "tren",
+    "nombre": "Tren"
+  },
+  {
+    "archivo": "avion",
+    "nombre": "Avión"
+  }
+]
