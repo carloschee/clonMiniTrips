@@ -1,18 +1,43 @@
 [
   {
-    "archivo": "coche",
-    "nombre": "Auto"
+  "avion": {
+    "nombre": "Avión",
+    "imagen": "avion.png",
+    "tipo": "aire",
+    "colorCielo": "#87CEEB",
+    "colorFondo": "#a8e6cf",
+    "marcadores": "🪧",
+    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
   },
-  {
-    "archivo": "barco",
-    "nombre": "Barco"
+  "tren": {
+    "nombre": "Tren",
+    "imagen": "tren.png",
+    "tipo": "tierra",
+    "colorCielo": "#87CEEB",
+    "colorFondo": "#a8e6cf",
+    "marcadores": "🪧",
+    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
   },
-  {
-    "archivo": "tren",
-    "nombre": "Tren"
+  "barco": {
+    "nombre": "Barco",
+    "imagen": "barco.png",
+    "tipo": "agua",
+    "colorCielo": "#E0F7FA",
+    "colorFondo": "#0288D1",
+    "marcadores": "🛟",
+    "elementos": ["🐟", "🐬", "🐙", "🏝️", "🦀", "🦆", "🐚", "🐳"]
   },
-  {
-    "archivo": "avion",
-    "nombre": "Avión"
+  "coche": {
+    "nombre": "Coche",
+    "imagen": "coche.png",
+    "tipo": "tierra",
+    "colorCielo": "#87CEEB",
+    "colorFondo": "#a8e6cf",
+    "marcadores": "🪧",
+    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
   }
+}
 ]
+
+
+
