@@ -8,11 +8,25 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Viajes Divertidos - Mini Clon</title>
     <style>
+        /*
+         * ==========================================================================
+         * SECCIÓN 1: HOJA DE ESTILOS (CSS)
+         * Define los colores, diseño interactivo y animaciones de la interfaz.
+         * ==========================================================================
+         */
         :root {
+            /* Variables de color para mantener consistencia en todo el diseño */
             --primary: #FF6B6B;
             --secondary: #4ECDC4;
             --bg: #F7FFF7;
             --text: #2C3E50;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; /* Previene el comportamiento nativo táctil (como el scroll) al interactuar con el juego */
         }
 
         * {
@@ -199,10 +213,19 @@
 </head>
 <body>
 
-    <!-- Canvas donde se renderiza el juego -->
+    <!--
+      ==========================================================================
+      SECCIÓN 2: ESTRUCTURA DE LA INTERFAZ (HTML)
+      Aquí se definen las "capas" visuales del juego. El canvas es el fondo
+      donde ocurre la acción, y los <div> son pantallas que se muestran u
+      ocultan según el estado del juego (Menú, Jugando, Victoria).
+      ==========================================================================
+    -->
+
+    <!-- Canvas: El lienzo de dibujo de HTML5 donde se renderizan los gráficos 2D del juego -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Menú Principal -->
+    <!-- Menú Principal: Pantalla inicial para seleccionar vehículo -->
     <div id="main-menu" class="ui-layer active-ui">
         <h1 class="title">Viajes Divertidos</h1>
         <div class="grid-vehiculos">
@@ -242,48 +265,62 @@
 
 <script>
 /**
- * SISTEMA PRINCIPAL DEL JUEGO
- * Maneja el renderizado en canvas, físicas simples, y generación procedural.
+ * ==========================================================================
+ * SECCIÓN 3: MOTOR DEL JUEGO (JAVASCRIPT)
+ * Este script maneja toda la lógica interactiva: físicas, dibujos, sonido,
+ * entrada del usuario y la generación matemática/procedural de los niveles.
+ * ==========================================================================
  */
 
+// Referencias directas al elemento Canvas y su API de dibujo
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d'); // Contexto 2D usado para trazar formas, caminos y texto
 
-// Variables de estado
-let estadoJuego = 'MENU'; // MENU, JUGANDO, VICTORIA
-let vehiculoActual = null;
-let animFrameId;
-let tiempoAnterior = 0;
+// --- VARIABLES GLOBALES DE ESTADO ---
+// Definen en qué ciclo se encuentra la aplicación en este momento.
+let estadoJuego = 'MENU'; // Posibles estados: 'MENU', 'JUGANDO', 'VICTORIA'
+let vehiculoActual = null; // Guardará el set de reglas del vehículo elegido
+let animFrameId; // Guarda el ID del ciclo de animación (útil para detenerlo)
+let tiempoAnterior = 0; // Se usa para calcular cuánto tiempo ha pasado entre fotogramas
 
-// Mundo y Cámara
-const LONGITUD_NIVEL = 15000;
-let camaraX = 0;
-let camaraY = 0;
+// --- MUNDO VIRTUAL Y CÁMARA ---
+// El "mundo" de nuestro juego es mucho más amplio que la pantalla. 
+// La "cámara" actúa como un visor que dicta qué segmento de este mundo vemos.
+const LONGITUD_NIVEL = 15000; // Largo total de la ruta en coordenadas
+let camaraX = 0; // Desplazamiento horizontal de visualización
+let camaraY = 0; // Desplazamiento vertical de visualización
 let anchoMundo = LONGITUD_NIVEL;
-let nivelGenerado = [];
-let particulas = [];
-let marcadores = [];
+let nivelGenerado = []; // Lista (Array) de todos los objetos interactivos actuales
+let particulas = []; // Lista de efectos visuales temporales (estrellitas, gotas)
+let marcadores = []; // Lista de las banderas de control numeradas (del 10 al 1)
 
-// Jugador
+// --- EL JUGADOR ---
+// Estructura de datos que rastrea al actor principal.
 let jugador = {
     x: 0,
     y: 0,
     velocidadX: 0,
     velocidadY: 0,
     emoji: '🚗',
-    tipo: 'tierra', // tierra, agua, aire, via
-    rotacion: 0
+    tipo: 'tierra', // El tipo afecta el comportamiento de las físicas (flota, vuela o rueda)
+    rotacion: 0 // Inclinación visual del vehículo al escalar terrenos
 };
 
-// Controles
+// --- ENTRADAS (INPUTS) ---
+// Registra si el usuario interactúa para saber si debemos aplicar fuerza/aceleración.
 let inputs = {
     presionado: false,
-    x: 0,
-    y: 0,
-    mitadDerecha: false
+    x: 0, // Coordenada X del toque en pantalla
+    y: 0, // Coordenada Y del toque en pantalla
+    mitadDerecha: false // Determina si la intención es avanzar o retroceder
 };
 
-// Configuración de los Vehículos y sus entornos
+/**
+ * BASE DE DATOS DE VEHÍCULOS (CONFIGURACIÓN)
+ * Contiene los "planos" o reglas para armar cada tipo de nivel.
+ * Especial atención a la función 'generarTerreno': usa ondas sinusoidales (Math.sin) 
+ * combinadas para crear curvas orgánicas que representan colinas y olas.
+ */
 const CONFIGURACION = {
     auto: {
         emoji: '🚗', tipo: 'tierra', colorCielo: '#87CEEB', colorFondo: '#a8e6cf',
@@ -307,10 +344,18 @@ const CONFIGURACION = {
     }
 };
 
-// --- SONIDO SINTETIZADO (Web Audio API) ---
+/**
+ * ==========================================================================
+ * SISTEMA DE SONIDO SINTETIZADO (Web Audio API)
+ * Genera efectos de sonido mediante ondas matemáticas (osciladores) en lugar
+ * de cargar archivos de audio estáticos (mp3/wav). Esto hace a la PWA muy ligera.
+ * ==========================================================================
+ */
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 let audioCtx;
 
+// Inicializa el sistema de audio. Por medidas de seguridad, los navegadores
+// modernos requieren que el audio despierte SOLO después del primer toque del usuario.
 function initAudio() {
     if (!audioCtx) {
         audioCtx = new AudioContext();
@@ -320,6 +365,7 @@ function initAudio() {
     }
 }
 
+// Crea bips y fanfarrias usando tonos procedimentales.
 function reproducirSonido(tipo) {
     if (!audioCtx) return;
     const osc = audioCtx.createOscillator();
@@ -351,20 +397,28 @@ function reproducirSonido(tipo) {
     }
 }
 
-// --- AJUSTE DE PANTALLA ---
+/**
+ * ==========================================================================
+ * MANEJO DE CONTROLES (Eventos de Navegador)
+ * Detecta toques táctiles móviles (Touch) y clics de escritorio (Mouse) en la pantalla.
+ * ==========================================================================
+ */
+
+// Garantiza que el lienzo abarque toda la ventana en cualquier momento
 function redimensionarCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 window.addEventListener('resize', redimensionarCanvas);
-redimensionarCanvas(); // Inicializar
+redimensionarCanvas(); // Ejecución inicial
 
-// --- EVENTOS DE ENTRADA (Touch y Mouse) ---
+// Se lanza en cuanto el usuario baja el dedo o da clic
 function manejarInicioEntrada(e) {
     if (estadoJuego !== 'JUGANDO') return;
-    initAudio(); // Inicializar audio en la primera interacción
+    initAudio(); // Reactivar audio (política navegador)
     inputs.presionado = true;
     
+    // Unificar sistema Touch y Mouse leyendo siempre las coordenadas exactas X/Y
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     
@@ -372,28 +426,33 @@ function manejarInicioEntrada(e) {
     inputs.y = clientY;
     inputs.mitadDerecha = clientX > window.innerWidth / 2;
 
-    // Detectar interacción con elementos del entorno
+    // Detectar Interacciones Táctiles:
+    // Convertimos la posición del toque en la pantalla local a la posición real dentro
+    // del vasto mundo virtual sumándole la posición actual de la cámara.
     const mundoX = clientX + camaraX;
     const mundoY = clientY + camaraY;
     
     let interactuo = false;
     for (let el of nivelGenerado) {
-        // Distancia simple para colisión circular (hitbox grande para niños)
+        // Distancia euclidiana (Teorema de Pitágoras) para una colisión circular (hitbox)
         const dist = Math.hypot(el.x - mundoX, el.y - mundoY);
+        // Radio de 80px: Es deliberadamente amplio para ser tolerante con niños pequeños
         if (dist < 80) {
             el.interactuar();
             interactuo = true;
-            break;
+            break; // Salir para interactuar con solo 1 elemento a la vez
         }
     }
     
-    // Si no tocamos un objeto, aceleramos (la lógica está en el bucle principal)
+    // (Si no se tocó ningún objeto del mapa, el motor de físicas leerá 'inputs.presionado = true' para acelerar)
 }
 
+// Se ejecuta al levantar el dedo o soltar el clic
 function manejarFinEntrada(e) {
     inputs.presionado = false;
 }
 
+// Se actualiza continuamente mientras el dedo/puntero se arrastra
 function manejarMovimientoEntrada(e) {
     if (!inputs.presionado) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -411,35 +470,46 @@ canvas.addEventListener('touchstart', manejarInicioEntrada, {passive: false});
 window.addEventListener('touchend', manejarFinEntrada);
 canvas.addEventListener('touchmove', manejarMovimientoEntrada, {passive: false});
 
-// --- LÓGICA DEL JUEGO ---
+/**
+ * ==========================================================================
+ * LÓGICA DE TRANSICIONES Y MENÚS
+ * Controla el inicio de los viajes, el reinicio de los mismos y la meta final.
+ * ==========================================================================
+ */
 
+// Transición del menú principal hacia la fase jugable
 function iniciarJuego(tipoVehiculo) {
     initAudio();
-    vehiculoActual = CONFIGURACION[tipoVehiculo];
+    vehiculoActual = CONFIGURACION[tipoVehiculo]; // Cargar set de reglas
+    
+    // Resetear al jugador a los valores de fábrica para un nuevo viaje
     jugador.emoji = vehiculoActual.emoji;
     jugador.tipo = vehiculoActual.tipo;
-    jugador.x = 200; // Posición inicial
+    jugador.x = 200; // Posición de salida inicial
     jugador.y = canvas.height / 2;
     jugador.velocidadX = 0;
     jugador.velocidadY = 0;
     
+    // Regresar cámara al origen
     camaraX = 0;
     camaraY = 0;
     tiempoAnterior = performance.now();
     
-    generarNivel();
+    generarNivel(); // Instanciar obstáculos y terreno
     
-    // Cambiar UI
+    // Transición UI: Apagar pantallas inactivas encendiendo las activas (modificando CSS)
     document.getElementById('main-menu').classList.add('hidden');
     document.getElementById('victory-screen').classList.add('hidden');
     document.getElementById('game-ui').classList.remove('hidden');
     
     estadoJuego = 'JUGANDO';
     
+    // Iniciar el corazón del juego si estaba pausado
     if (animFrameId) cancelAnimationFrame(animFrameId);
     buclePrincipal(tiempoAnterior);
 }
 
+// Transición de regreso para elegir un viaje nuevo
 function volverAlMenu() {
     estadoJuego = 'MENU';
     if (animFrameId) cancelAnimationFrame(animFrameId);
@@ -449,11 +519,12 @@ function volverAlMenu() {
     document.getElementById('main-menu').classList.remove('hidden');
 }
 
+// Secuencia final una vez que el jugador cruza la meta
 function mostrarVictoria() {
     estadoJuego = 'VICTORIA';
     reproducirSonido('meta');
     
-    // Lluvia de confeti
+    // Ciclo visual para generar "Lluvia de confeti" y destellos
     for(let i=0; i<100; i++) {
         crearParticula(jugador.x + Math.random()*200 - 100, jugador.y - Math.random()*200, ['🎉', '🎊', '⭐', '🎈'][Math.floor(Math.random()*4)]);
     }
@@ -462,26 +533,34 @@ function mostrarVictoria() {
     document.getElementById('victory-screen').classList.remove('hidden');
 }
 
-// --- GENERACIÓN PROCEDURAL ---
+/**
+ * ==========================================================================
+ * GENERADOR DE MUNDOS PROCEDURALES
+ * En lugar de usar un archivo de mapa estático, aquí se "construye" un
+ * ecosistema de tamaño variable salpicando objetos a distancias predecibles.
+ * ==========================================================================
+ */
 
+// Plantilla (Clase) para los "actores" del mundo decorativo (vacas, pinos, señales...)
 class ElementoEntorno {
     constructor(x, y, emoji, tipoVehiculo) {
         this.x = x;
         this.y = y;
-        this.yBase = y; // Para animaciones que vuelven a la base
+        this.yBase = y; // Posición ancla; útil para animaciones como saltos que deben volver al piso
         this.emoji = emoji;
-        this.escala = 1.0 + Math.random() * 0.5;
+        this.escala = 1.0 + Math.random() * 0.5; // Escalas únicas para no ver clones exactos
         this.tiempoAnimacion = 0;
-        this.estadoAnimacion = 'reposo'; // reposo, saltando, girando
+        this.estadoAnimacion = 'reposo'; // Modos: 'reposo' (idle), 'saltando', 'girando'
         this.tipoVehiculo = tipoVehiculo;
     }
 
+    // Comportamiento al reaccionar al toque del usuario
     interactuar() {
-        if (this.estadoAnimacion !== 'reposo') return;
+        if (this.estadoAnimacion !== 'reposo') return; // Bloquear si ya está animándose
         
         reproducirSonido('interactuar');
         
-        // Decidir animación aleatoria
+        // Decidir animación aleatoriamente: 50% de probabilidad de saltar vs girar
         const r = Math.random();
         if (r < 0.5) {
             this.estadoAnimacion = 'saltando';
@@ -490,31 +569,33 @@ class ElementoEntorno {
         }
         this.tiempoAnimacion = 0;
         
-        // Crear partículas visuales
+        // Efectos extra (sparkles), personalizados si es una nube o pez
         crearParticula(this.x, this.y - 40, '✨');
         if (this.emoji === '☁️') crearParticula(this.x, this.y, '💨');
         if (this.emoji === '🐟') crearParticula(this.x, this.y, '💧');
     }
 
+    // Calculo periódico que mueve el objeto localmente si está bajo los efectos de una acción
     actualizar(dt) {
         if (this.estadoAnimacion === 'saltando') {
             this.tiempoAnimacion += dt;
-            const progreso = this.tiempoAnimacion / 0.5; // dura 0.5s
+            const progreso = this.tiempoAnimacion / 0.5; // Duración hard-coded de 0.5 segundos
             if (progreso >= 1) {
                 this.estadoAnimacion = 'reposo';
                 this.y = this.yBase;
             } else {
-                // Parábola simple
+                // Generar curva parabólica matemática (senoide) del piso al aire y de regreso
                 this.y = this.yBase - Math.sin(progreso * Math.PI) * 100;
             }
         } else if (this.estadoAnimacion === 'girando') {
             this.tiempoAnimacion += dt;
-            if (this.tiempoAnimacion > 1.0) {
+            if (this.tiempoAnimacion > 1.0) { // Duración de giro: 1 seg
                 this.estadoAnimacion = 'reposo';
             }
         }
     }
 
+    // Trasladar la posición de datos puros a un dibujo sobre el Canvas
     dibujar(ctx) {
         ctx.save();
         ctx.translate(this.x - camaraX, this.y - camaraY);
@@ -537,22 +618,26 @@ class ElementoEntorno {
     }
 }
 
+// Creador e inyector del ecosistema entero. Llena el mundo de inicio a fin.
 function generarNivel() {
     nivelGenerado = [];
     marcadores = [];
     particulas = [];
     
-    // 1. Crear el punto de inicio
+    // 1. Crear el punto de inicio (Meta o Bandera Inicial)
     nivelGenerado.push(new ElementoEntorno(200, vehiculoActual.generarTerreno(200, 0) - 50, '🏁', jugador.tipo));
 
-    // 2. Crear las 10 secciones y sus marcadores
+    // 2. Dividir el trayecto largo en 10 "tramos" o secciones matemáticas
     const distanciaPorSeccion = (LONGITUD_NIVEL - 2000) / 10;
     
+    // Bucle regresivo: Pone los hitos que el usuario cuenta (De la señal 10 a la señal 1)
     for (let i = 10; i >= 1; i--) {
         const xMarcador = 1000 + (10 - i) * distanciaPorSeccion;
+        
+        // Evaluar altura del terreno en ese punto X en tiempo 0 para asentar el objeto encima
         let yMarcador = vehiculoActual.generarTerreno(xMarcador, 0) - 60;
         
-        // Ajustes específicos de altura por entorno
+        // Modificador: Si volamos el avión, los puntos de control flotan en el cielo al azar
         if (jugador.tipo === 'aire') yMarcador = canvas.height * 0.2 + Math.random() * (canvas.height * 0.5);
         
         marcadores.push({
@@ -560,22 +645,23 @@ function generarNivel() {
             y: yMarcador,
             numero: i,
             emoji: vehiculoActual.marcadores,
-            pasado: false
+            pasado: false // Esta bandera (flag) indica si el jugador cruzó esta marca o no
         });
         
-        // 3. Rellenar la sección con elementos aleatorios del entorno
-        const numElementos = 5 + Math.floor(Math.random() * 5);
+        // 3. Rellenar este tramo (entre marcador y marcador) con follaje, edificios y criaturas
+        const numElementos = 5 + Math.floor(Math.random() * 5); // Ej: crea entre 5 y 9 objetos
         for (let j = 0; j < numElementos; j++) {
+            // Posición X esparcida dentro de la sección
             const xAleatoria = xMarcador + Math.random() * distanciaPorSeccion;
             let yAleatoria = vehiculoActual.generarTerreno(xAleatoria, 0);
             
-            // Variación vertical según el vehículo
+            // Variación vertical según la naturaleza del viaje
             if (jugador.tipo === 'aire') {
-                yAleatoria = Math.random() * canvas.height * 0.8; // Cielo
+                yAleatoria = Math.random() * canvas.height * 0.8; // Cielo abierto
             } else if (jugador.tipo === 'agua') {
-                yAleatoria += (Math.random() * 40 - 20); // Cerca del agua
+                yAleatoria += (Math.random() * 40 - 20); // Chapoteando (arriba/abajo leve) del nivel acuático
             } else {
-                yAleatoria -= 30; // Sobre la tierra/vía
+                yAleatoria -= 30; // Posado estático y al ras de suelo sólido
             }
             
             const emojiAleatorio = vehiculoActual.elementos[Math.floor(Math.random() * vehiculoActual.elementos.length)];
@@ -583,157 +669,178 @@ function generarNivel() {
         }
     }
 
-    // 4. Crear la Meta final
+    // 4. Crear la Meta final/El Castillo al horizonte de término
     nivelGenerado.push(new ElementoEntorno(LONGITUD_NIVEL - 500, vehiculoActual.generarTerreno(LONGITUD_NIVEL - 500, 0) - 50, '🏰', jugador.tipo));
 }
 
+// Pequeño constructor rápido para inyectar destellos/humo y soltarlos al entorno
 function crearParticula(x, y, emoji) {
     particulas.push({
         x: x,
         y: y,
-        vx: (Math.random() - 0.5) * 200,
-        vy: (Math.random() - 1) * 200,
+        vx: (Math.random() - 0.5) * 200, // Variación de rebote direccional horizontal
+        vy: (Math.random() - 1) * 200,   // Velocidad vertical (tiende siempre hacia arriba inicialmente)
         vida: 1.0,
         emoji: emoji
     });
 }
 
-// --- ACTUALIZACIÓN PRINCIPAL ---
-
+/**
+ * ==========================================================================
+ * MOTOR FÍSICO Y DE POSICIONAMIENTO
+ * Realiza todos los cálculos que dan vida a los objetos móviles en base 
+ * al paso del tiempo (Delta Time o 'dt').
+ * ==========================================================================
+ */
 function actualizarFisicas(dt) {
-    // 1. Control de movimiento horizontal
-    const velocidadMaxima = 400; // píxeles por segundo
+    // 1. Control de movimiento horizontal general
+    const velocidadMaxima = 400; // Límite en píxeles por segundo
     let aceleracionX = 0;
 
+    // Lógica principal de acelerador/freno
     if (inputs.presionado) {
         if (inputs.mitadDerecha) {
-            aceleracionX = 800; // Avanzar
+            aceleracionX = 800; // Impulso tractor al avanzar
         } else {
-            aceleracionX = -400; // Retroceder/Frenar
+            aceleracionX = -400; // Freno drástico / Retroceso
         }
     } else {
-        // Fricción suave
+        // Fricción suave: sin dedos, la inercia muere paulatinamente multiplicando < 1
         jugador.velocidadX *= 0.95;
     }
 
+    // Ecuación Clásica Cinemática: V = Velocidad + (Aceleración * DeltaTiempo)
     jugador.velocidadX += aceleracionX * dt;
     
-    // Limitar velocidad
+    // Sujetar la velocidad a los límites máximos por hardware
     if (jugador.velocidadX > velocidadMaxima) jugador.velocidadX = velocidadMaxima;
     if (jugador.velocidadX < -velocidadMaxima/2) jugador.velocidadX = -velocidadMaxima/2;
 
-    // Detener completamente si es muy lento
+    // Cortar el movimiento micral: detener el deslizamiento totalmente si es indetectable
     if (Math.abs(jugador.velocidadX) < 10 && !inputs.presionado) jugador.velocidadX = 0;
 
+    // Cambiar la posición virtual X sumando el factor velocidad
     jugador.x += jugador.velocidadX * dt;
 
-    // Evitar que vaya hacia atrás del inicio
+    // Barrera invisible de salida: Prevenir ir hacia atrás en el nivel antes del inicio
     if (jugador.x < 100) {
         jugador.x = 100;
         jugador.velocidadX = 0;
     }
 
-    // 2. Control de movimiento vertical (Adaptado por vehículo)
+    // 2. Control de movimiento vertical dependiente del ecosistema de terreno
+    // Obtener un tick de tiempo global constante para mover las olas a ritmo de reloj natural
     const tiempoMundo = performance.now() / 1000;
+    // Interceptar la posición futura/actual del terreno para adosar el jugador a ella
     const terrenoY = vehiculoActual.generarTerreno(jugador.x, tiempoMundo);
 
     if (jugador.tipo === 'aire') {
-        // El avión sigue la Y del dedo si está presionado
+        // En el aire, la altura la dicta directamente dónde pone el dedo el jugador
         if (inputs.presionado) {
             const objetivoY = inputs.y + camaraY;
-            jugador.y += (objetivoY - jugador.y) * 5 * dt; // Suavizado
+            // "Suavizado simple" (Lerp simple) para no hacer un teletransporte brusco de la nave
+            jugador.y += (objetivoY - jugador.y) * 5 * dt; 
         }
-        // Límites cielo/suelo
+        // Choques: el cielo es el tope alto(50), el suelo matemático es el fondo
         if (jugador.y < 50) jugador.y = 50;
         if (jugador.y > terrenoY - 50) jugador.y = terrenoY - 50;
         
-        // Inclinación
+        // Inclinación dinámica de alerones al ir rápido o subir rápido
         jugador.rotacion = jugador.velocidadX * 0.0005 + (inputs.presionado ? (inputs.y + camaraY - jugador.y)*0.002 : 0);
 
     } else if (jugador.tipo === 'agua') {
-        // El barco flota en la ola actual
-        jugador.y = terrenoY - 30; // Flota encima
-        // Rotación basada en la derivada (pendiente) de la ola
+        // El barco descansa encima de la curva sinusoidal dinámica (La "ola")
+        jugador.y = terrenoY - 30; 
+        // Calcular pendiente evaluando la Y unos píxeles más adelante para la proa del barco
         const terrenoFuturo = vehiculoActual.generarTerreno(jugador.x + 10, tiempoMundo);
+        // Math.atan2 extrae el vector ángulo y da cabeceo realista
         jugador.rotacion = Math.atan2(terrenoFuturo - terrenoY, 10);
         
     } else {
-        // Auto y Tren: Se pegan al suelo suavemente
+        // Auto y Tren: Suspensión rígida atada a la curva base
         jugador.y = terrenoY - 40;
-        // Rotación basada en el terreno
         const terrenoFuturo = vehiculoActual.generarTerreno(jugador.x + 20, tiempoMundo);
         jugador.rotacion = Math.atan2(terrenoFuturo - terrenoY, 20);
         
-        // Animación de baches al moverse
+        // Pequeño efecto vibratorio (baches) al rodar muy deprisa
         if (jugador.velocidadX > 50 && jugador.tipo === 'tierra') {
             jugador.y += Math.sin(tiempoMundo * 20) * 3;
         }
     }
 
-    // 3. Actualizar Cámara (Sigue al jugador)
-    camaraX = jugador.x - canvas.width * 0.3; // Jugador a un tercio de la pantalla
-    // Limitar cámara izquierda
-    if (camaraX < 0) camaraX = 0;
+    // 3. Sistema de Rastreo de Cámara
+    // Mantiene la vista centrada a una distancia asimétrica (vemos más mundo hacia la derecha que a la izquierda)
+    camaraX = jugador.x - canvas.width * 0.3; 
+    if (camaraX < 0) camaraX = 0; // Trabar lente izquierdo al comienzo
     
-    // Suavizar Y de la cámara para que no maree
+    // Centrado suavizado vertical en Y (Impide que los baches mareen al ojo del usuario)
     const camaraObjetivoY = jugador.y - canvas.height / 2;
     camaraY += (camaraObjetivoY - camaraY) * 2 * dt;
 
-    // 4. Actualizar Elementos
+    // 4. Actulizar Estados del Ecosistema
     for (let el of nivelGenerado) {
-        // Solo actualizar si están cerca de la cámara por rendimiento
+        // Optimización masiva (Culling): Solo las entidades cerca del rango visual ejecutan cálculo
         if (el.x > camaraX - 200 && el.x < camaraX + canvas.width + 200) {
             el.actualizar(dt);
         }
     }
 
-    // 5. Actualizar Partículas
+    // 5. Motor de Gravedad para Partículas (El confeti debe caer solo)
     for (let i = particulas.length - 1; i >= 0; i--) {
         let p = particulas[i];
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        p.vy += 500 * dt; // Gravedad
-        p.vida -= dt;
+        p.vy += 500 * dt; // Fuerza gravitacional acumulativa constante
+        p.vida -= dt;     // Reloj de extinción
         if (p.vida <= 0) {
-            particulas.splice(i, 1);
+            particulas.splice(i, 1); // Destruir referencia virtual en memoria si expira
         }
     }
 
-    // 6. Revisar Marcadores y Progreso
-    let progresoActual = (jugador.x / LONGITUD_NIVEL) * 100;
+    // 6. Progresión UI y Detección de Hitos
+    let progresoActual = (jugador.x / LONGITUD_NIVEL) * 100; // Porcentual %
     if (progresoActual > 100) progresoActual = 100;
     document.getElementById('progress-bar').style.width = `${progresoActual}%`;
 
+    // Interceptar choques visuales entre coche y cartel numérico
     for (let m of marcadores) {
         if (!m.pasado && jugador.x > m.x) {
-            m.pasado = true;
+            m.pasado = true; // Sellar comprobación
             crearParticula(m.x, m.y - 50, '✨');
             reproducirSonido('interactuar');
         }
     }
 
-    // 7. Condición de Victoria
+    // 7. Disparador de la Pantalla de Fin
     if (jugador.x >= LONGITUD_NIVEL - 500 && estadoJuego === 'JUGANDO') {
         mostrarVictoria();
     }
 }
 
-// --- RENDERIZADO ---
-
+/**
+ * ==========================================================================
+ * FLUJO DE RENDERIZADO (El Pintor Principal)
+ * Recolecta todos los datos analíticos del paso de físicas y "Pinta" la
+ * pantalla con píxeles mediante el HTML Canvas 2D API.
+ * Su estructura funciona en estilo Pila / Z-Index (Fondo a Frente).
+ * ==========================================================================
+ */
 function dibujar(dt) {
-    // 1. Limpiar pantalla con el color del cielo
+    // 1. Limpiar pantalla con rodillo gigante de pintura celestial
     ctx.fillStyle = vehiculoActual.colorCielo;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const tiempoMundo = performance.now() / 1000;
 
-    // 2. Dibujar fondo/parallax simple (Nubes/Montañas)
+    // 2. Fondo Estacionario (Efecto Parallax / Ilusión óptica 3D)
     ctx.save();
     ctx.globalAlpha = 0.5;
     ctx.font = '80px Arial';
+    // Coloca decorados gigantescos, pero su "x" viaja multiplicado * 0.2 (Súper lento)
     for(let i=0; i<LONGITUD_NIVEL; i+=800) {
         const parallaxX = (i - camaraX * 0.2);
-        // Mostrar en pantalla solo lo visible
+        
+        // Evita dibujar fuera de los linderos monitoreados de la ventana
         if(parallaxX > -100 && parallaxX < canvas.width + 100) {
             if(jugador.tipo === 'aire' || jugador.tipo === 'tierra') {
                 ctx.fillText('☁️', parallaxX, canvas.height * 0.2 + Math.sin(i)*50);
@@ -745,48 +852,50 @@ function dibujar(dt) {
     }
     ctx.restore();
 
-    // 3. Dibujar Terreno / Agua
+    // 3. Geometría Principal: Creando el trazado matemático del suelo/río interactivo
     ctx.beginPath();
-    ctx.moveTo(0, canvas.height);
+    ctx.moveTo(0, canvas.height); // Abajo a la izquierda
     
-    // Calcular puntos de la curva del terreno visibles en pantalla
     const inicioX = Math.floor(camaraX);
     const finX = Math.floor(camaraX + canvas.width);
     
-    // Punto inicial a la izquierda
+    // Punto de enganche de lectura izquierda
     ctx.lineTo(0, vehiculoActual.generarTerreno(inicioX, tiempoMundo) - camaraY);
 
+    // Dibuja una línea que une los puntitos de la función cada 50 px de resolución
     for (let x = inicioX; x <= finX; x += 50) {
         const y = vehiculoActual.generarTerreno(x, tiempoMundo) - camaraY;
-        ctx.lineTo(x - camaraX, y);
+        ctx.lineTo(x - camaraX, y); // Transforma punto X real a su equivalente en Pantalla Visual Restada
     }
     
-    // Punto final a la derecha
+    // Cerrar bloque sólido inferior regresando al subsuelo
     ctx.lineTo(canvas.width, vehiculoActual.generarTerreno(finX, tiempoMundo) - camaraY);
     ctx.lineTo(canvas.width, canvas.height);
     
     ctx.fillStyle = vehiculoActual.colorFondo;
     
+    // Renderizados específicos decorativos por bioma
     if (jugador.tipo === 'agua') {
-        ctx.globalAlpha = 0.8; // Agua semitransparente
+        ctx.globalAlpha = 0.8; // Masa fluida y gelatinosa azul
         ctx.fill();
         ctx.globalAlpha = 1.0;
-        // Línea de superficie del agua
+        // Agrega línea luminiscente para la espuma del oleaje
         ctx.strokeStyle = '#81D4FA';
         ctx.lineWidth = 5;
         ctx.stroke();
     } else {
-        ctx.fill();
+        ctx.fill(); // Relleno de pasto opaco general
         if (jugador.tipo === 'tierra') {
-            ctx.strokeStyle = '#81C784';
+            ctx.strokeStyle = '#81C784'; // Listón de borde de vía terrestre
             ctx.lineWidth = 8;
             ctx.stroke();
         } else if (jugador.tipo === 'via') {
-            // Dibujar vía del tren encima de la curva
+            // Capa de los rieles metalizados
             ctx.strokeStyle = '#5D4037';
             ctx.lineWidth = 10;
             ctx.stroke();
-            // Durmientes
+            
+            // Subcapa iterativa de rieles (Banda durmiente transversal de madera)
             ctx.strokeStyle = '#3E2723';
             ctx.lineWidth = 3;
             for (let x = inicioX; x <= finX; x += 60) {
@@ -799,71 +908,72 @@ function dibujar(dt) {
         }
     }
 
-    // 4. Dibujar Elementos del Nivel (culling básico)
+    // 4. Dibujar Follaje y Residentes (Aves, Peces, Pinos)
     for (let el of nivelGenerado) {
         if (el.x > camaraX - 100 && el.x < camaraX + canvas.width + 100) {
             el.dibujar(ctx);
         }
     }
 
-    // 5. Dibujar Marcadores (10 a 1)
+    // 5. Dibujar Cartelería Urbana Intermedia (Números del 10 al 1)
     for (let m of marcadores) {
         if (m.x > camaraX - 100 && m.x < camaraX + canvas.width + 100) {
             ctx.save();
             ctx.translate(m.x - camaraX, m.y - camaraY);
             
-            // Efecto de rebote si ya se pasó
+            // Reflejar metamorfosis visual si el usuario superó la zona
             if (m.pasado) {
-                ctx.scale(1.2, 1.2);
-                ctx.globalAlpha = 0.5;
+                ctx.scale(1.2, 1.2); // Expande tamaño
+                ctx.globalAlpha = 0.5; // Causa aspecto "fantasma" de fondo
             } else {
-                // Pequeña flotación
+                // Si no se supera, balancear levemente provocativamente
                 ctx.translate(0, Math.sin(tiempoMundo * 3 + m.x) * 5);
             }
 
-            // Dibujar icono marcador
+            // Pintura emoji del poste general
             ctx.font = '60px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(m.emoji, 0, 0);
             
-            // Dibujar el número encima
+            // Pintura de tipografía sobre el objeto (Fuente remarcada legible)
             ctx.font = 'bold 30px Arial';
             ctx.fillStyle = 'white';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 4;
-            ctx.strokeText(m.numero, 0, 5);
-            ctx.fillText(m.numero, 0, 5);
+            ctx.strokeText(m.numero, 0, 5); // Remarque del borde fuente (Sombra perimetral)
+            ctx.fillText(m.numero, 0, 5); // Tinta blanca primaria
             
             ctx.restore();
         }
     }
 
-    // 6. Dibujar Jugador
+    // 6. El Piloto (Vehículo Principal de Renderizado Dinámico)
     ctx.save();
+    // Centrar ancla de pluma visual en coordenadas lógicas calculadas
     ctx.translate(jugador.x - camaraX, jugador.y - camaraY);
-    ctx.rotate(jugador.rotacion);
+    ctx.rotate(jugador.rotacion); // Aplicar ángulo de inclinación de la colina/ola
     
-    // Ligero rebote por respiración/motor
+    // Aplicar pulso "respiratorio" constante independiente al motor de física
     ctx.translate(0, Math.sin(tiempoMundo * 10) * 2);
 
     ctx.font = '70px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Si va hacia atrás, voltear
+    // Inteligencia Visual: Si frena fuerte y se mueve hacia atrás, voltea el dibujo (Efecto espejo)
     if (jugador.velocidadX < -10) {
         ctx.scale(-1, 1);
     }
     
-    ctx.fillText(jugador.emoji, 0, 0);
+    ctx.fillText(jugador.emoji, 0, 0); // Dibujado maestro del héroe
     ctx.restore();
 
-    // 7. Dibujar Partículas
+    // 7. Capa Frontal y de Interfaz Relativa (Confetis y brillos frente a todo)
     for (let p of particulas) {
         ctx.save();
         ctx.translate(p.x - camaraX, p.y - camaraY);
-        ctx.globalAlpha = p.vida; // Desvanecer
+        ctx.globalAlpha = p.vida; // Difuminar con el delta time restado en físicas
         ctx.font = '30px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -872,21 +982,35 @@ function dibujar(dt) {
     }
 }
 
+/**
+ * ==========================================================================
+ * CICLO DE MÁQUINA (EL CORAZÓN) / GAME LOOP PRINCIPAL
+ * Todo juego corre con un motor que no descansa jamás mientras la partida
+ * sigue activa. Intenta repetir este paso unas 60 veces por cada segundo.
+ * ==========================================================================
+ */
 function buclePrincipal(timestamp) {
-    if (estadoJuego !== 'JUGANDO') return;
+    if (estadoJuego !== 'JUGANDO') return; // Bloquear ejecución fantasma en los menús
     
-    // Calcular Delta Time (dt) seguro
+    // Delta Time o 'dt': Transforma fotogramas a una escala de tiempo (segundos reales).
+    // Esto significa que si tu PC va lento, los cálculos crecen y el personaje viaja más 
+    // cantidad de píxeles compensando el tiempo estancado, ¡Evitando un juego en cámara lenta!
     let dt = (timestamp - tiempoAnterior) / 1000;
-    if (dt > 0.1) dt = 0.1; // Límite para evitar saltos locos si la pestaña se pausa
+    
+    // Si cambiaste de pestaña a mirar Youtube, el navegador pudo pausar el bucle 30 segundos.
+    // Esto limitador corta el DT gigante para evitar que el auto salte de un pantallazo a la meta.
+    if (dt > 0.1) dt = 0.1; 
+    
     tiempoAnterior = timestamp;
 
-    actualizarFisicas(dt);
-    dibujar(dt);
+    actualizarFisicas(dt); // Analiza la Matemática oculta del nuevo fotograma
+    dibujar(dt);           // Dibuja un fotograma que refleje esa Matemática
 
+    // Se autovoca (Re-Loop) usando la función más pulida de los navegadores para animar a 60Hz.
     animFrameId = requestAnimationFrame(buclePrincipal);
 }
 
-// Inicialización de la pantalla
+// Pintura primaria blanca para llenar canvas vacío antes de que el usuario haga nada al cargar app
 ctx.fillStyle = '#F7FFF7';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
