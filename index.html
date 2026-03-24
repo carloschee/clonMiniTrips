@@ -228,19 +228,8 @@
     <!-- Menú Principal: Pantalla inicial para seleccionar vehículo -->
     <div id="main-menu" class="ui-layer active-ui">
         <h1 class="title">Viajes Divertidos</h1>
-        <div class="grid-vehiculos">
-            <button class="btn-vehiculo" onclick="iniciarJuego('auto')">
-                🚗 <span>Auto</span>
-            </button>
-            <button class="btn-vehiculo" onclick="iniciarJuego('barco')">
-                ⛵ <span>Barco</span>
-            </button>
-            <button class="btn-vehiculo" onclick="iniciarJuego('tren')">
-                🚂 <span>Tren</span>
-            </button>
-            <button class="btn-vehiculo" onclick="iniciarJuego('avion')">
-                ✈️ <span>Avión</span>
-            </button>
+        <div class="grid-vehiculos" id="grid-vehiculos">
+            <p style="grid-column: span 2; text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--text);">Cargando vehículos...</p>
         </div>
     </div>
 
@@ -301,7 +290,7 @@ let jugador = {
     y: 0,
     velocidadX: 0,
     velocidadY: 0,
-    emoji: '🚗',
+    imagenObj: null, // Guardará el objeto de imagen cargado
     tipo: 'tierra', // El tipo afecta el comportamiento de las físicas (flota, vuela o rueda)
     rotacion: 0 // Inclinación visual del vehículo al escalar terrenos
 };
@@ -317,32 +306,74 @@ let inputs = {
 
 /**
  * BASE DE DATOS DE VEHÍCULOS (CONFIGURACIÓN)
- * Contiene los "planos" o reglas para armar cada tipo de nivel.
- * Especial atención a la función 'generarTerreno': usa ondas sinusoidales (Math.sin) 
- * combinadas para crear curvas orgánicas que representan colinas y olas.
+ * Ahora se cargará dinámicamente leyendo 'sprites.json'
  */
-const CONFIGURACION = {
-    auto: {
-        emoji: '🚗', tipo: 'tierra', colorCielo: '#87CEEB', colorFondo: '#a8e6cf',
-        marcadores: '🪧', elementos: ['🐄', '🌳', '🌲', '🐑', '🌻', '🍄', '🏕️', '🐦'],
-        generarTerreno: (x) => Math.sin(x / 300) * 40 + Math.sin(x / 800) * 60 + canvas.height * 0.7
-    },
-    barco: {
-        emoji: '⛵', tipo: 'agua', colorCielo: '#E0F7FA', colorFondo: '#0288D1',
-        marcadores: '🛟', elementos: ['🐟', '🐬', '🐙', '🏝️', '🦀', '🦆', '🐚', '🐳'],
-        generarTerreno: (x, tiempo) => Math.sin(x / 150 + tiempo * 2) * 15 + Math.sin(x / 400 + tiempo) * 20 + canvas.height * 0.65
-    },
-    tren: {
-        emoji: '🚂', tipo: 'via', colorCielo: '#B3E5FC', colorFondo: '#8D6E63',
-        marcadores: '🚦', elementos: ['🛤️', '⛰️', '🐎', '🏡', '🏭', '🌲', '🐄', '☁️'],
-        generarTerreno: (x) => Math.sin(x / 600) * 30 + canvas.height * 0.75
-    },
-    avion: {
-        emoji: '✈️', tipo: 'aire', colorCielo: '#4FC3F7', colorFondo: '#E1F5FE',
-        marcadores: '🎈', elementos: ['☁️', '🦅', '🌤️', '🛸', '🪁', '🚁', '🌈', '🕊️'],
-        generarTerreno: (x) => canvas.height * 0.9 // Suelo muy bajo, vuela libre
-    }
+let CONFIGURACION = {};
+
+// Separamos la lógica de las funciones generadoras de terreno porque 
+// el JSON no puede almacenar funciones matemáticas directamente.
+const GENERADORES_TERRENO = {
+    tierra: (x) => Math.sin(x / 300) * 40 + Math.sin(x / 800) * 60 + canvas.height * 0.7,
+    agua: (x, tiempo) => Math.sin(x / 150 + tiempo * 2) * 15 + Math.sin(x / 400 + tiempo) * 20 + canvas.height * 0.65,
+    via: (x) => Math.sin(x / 600) * 30 + canvas.height * 0.75,
+    aire: (x) => canvas.height * 0.9 // Suelo muy bajo, vuela libre
 };
+
+/**
+ * CARGA DE DATOS (FETCH JSON)
+ * Lee el archivo sprites.json, arma la configuración y precarga las imágenes de los vehículos.
+ */
+async function cargarVehiculos() {
+    try {
+        const respuesta = await fetch('sprites.json');
+        if (!respuesta.ok) throw new Error('No se pudo cargar sprites.json');
+        
+        const datos = await respuesta.json();
+        CONFIGURACION = datos;
+
+        const gridVehiculos = document.getElementById('grid-vehiculos');
+        gridVehiculos.innerHTML = ''; // Limpiar mensaje de "Cargando..."
+
+        // Iterar sobre cada vehículo definido en el JSON
+        for (const [clave, config] of Object.entries(CONFIGURACION)) {
+            // Asignar el generador de terreno correspondiente al tipo ("tierra", "agua", etc.)
+            config.generarTerreno = GENERADORES_TERRENO[config.tipo] || GENERADORES_TERRENO.tierra;
+
+            // Pre-cargar la imagen del sprite desde la carpeta 'sprites'
+            const img = new Image();
+            img.src = `sprites/${config.imagen}`; 
+            config.imagenObj = img;
+
+            // Crear el botón para el menú dinámicamente
+            const btn = document.createElement('button');
+            btn.className = 'btn-vehiculo';
+            btn.onclick = () => iniciarJuego(clave);
+            
+            // Imagen dentro del botón
+            const imgHtml = document.createElement('img');
+            imgHtml.src = img.src;
+            imgHtml.style.width = '80px'; 
+            imgHtml.style.height = '80px';
+            imgHtml.style.objectFit = 'contain';
+
+            // Etiqueta de texto (Usa 'nombre' del JSON o capitaliza la clave)
+            const span = document.createElement('span');
+            span.textContent = config.nombre || (clave.charAt(0).toUpperCase() + clave.slice(1));
+
+            btn.appendChild(imgHtml);
+            btn.appendChild(span);
+            gridVehiculos.appendChild(btn);
+        }
+
+    } catch (error) {
+        console.error("Error al iniciar los vehículos:", error);
+        document.getElementById('grid-vehiculos').innerHTML = 
+            '<p style="grid-column: span 2; text-align: center; color: var(--primary);">⚠️ No se encontró sprites.json. Asegúrate de estar corriendo un servidor web local.</p>';
+    }
+}
+
+// Iniciar la carga justo al iniciar el script
+cargarVehiculos();
 
 /**
  * ==========================================================================
@@ -483,7 +514,7 @@ function iniciarJuego(tipoVehiculo) {
     vehiculoActual = CONFIGURACION[tipoVehiculo]; // Cargar set de reglas
     
     // Resetear al jugador a los valores de fábrica para un nuevo viaje
-    jugador.emoji = vehiculoActual.emoji;
+    jugador.imagenObj = vehiculoActual.imagenObj; // Pasar la imagen pre-cargada
     jugador.tipo = vehiculoActual.tipo;
     jugador.x = 200; // Posición de salida inicial
     jugador.y = canvas.height / 2;
@@ -957,16 +988,26 @@ function dibujar(dt) {
     // Aplicar pulso "respiratorio" constante independiente al motor de física
     ctx.translate(0, Math.sin(tiempoMundo * 10) * 2);
 
-    ctx.font = '70px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
     // Inteligencia Visual: Si frena fuerte y se mueve hacia atrás, voltea el dibujo (Efecto espejo)
     if (jugador.velocidadX < -10) {
         ctx.scale(-1, 1);
     }
     
-    ctx.fillText(jugador.emoji, 0, 0); // Dibujado maestro del héroe
+    // Dibuja la imagen del vehículo cargada desde el JSON (si ya está cargada)
+    if (jugador.imagenObj && jugador.imagenObj.complete) {
+        const anchoVehiculo = 100; // Puedes ajustar el ancho en píxeles de tus sprites aquí
+        const altoVehiculo = 100;  // Puedes ajustar el alto en píxeles
+        
+        // La imagen se dibuja centrada retrocediendo la mitad de su tamaño
+        ctx.drawImage(jugador.imagenObj, -anchoVehiculo / 2, -altoVehiculo / 2, anchoVehiculo, altoVehiculo);
+    } else {
+        // Fallback visual si el JSON o la imagen fallaron
+        ctx.font = '70px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('❓', 0, 0); 
+    }
+    
     ctx.restore();
 
     // 7. Capa Frontal y de Interfaz Relativa (Confetis y brillos frente a todo)
