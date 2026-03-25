@@ -848,7 +848,8 @@
       // El agua del avión la dibujamos un poco más abajo para que las islas destaquen por encima
       let waterBaseY = (currentMode === 'avion') ? window.innerHeight * 0.15 : baseY_px;
 
-      let waveH = Math.sin(playerWorldX * 0.015 + waveTime) * 15 + Math.sin(playerWorldX * 0.008 + waveTime * 1.5) * 10;
+      // Generamos olas más anchas y suaves (bajando la frecuencia espacial a 0.004 y 0.002)
+      let waveH = Math.sin(playerWorldX * 0.004 + waveTime) * 15 + Math.sin(playerWorldX * 0.002 + waveTime * 1.5) * 10;
       if (currentMode === 'barco') {
          dynamicBaseY_px = waterBaseY + waveH;
       }
@@ -859,11 +860,13 @@
       for(let px = -50; px <= window.innerWidth + 50; px += 50) {
         let wX = playerWorldX + (px - window.innerWidth/2);
 
-        let fgH = Math.sin(wX * 0.015 + waveTime) * 15 + Math.sin(wX * 0.008 + waveTime * 1.5) * 10;
+        // Olas de primer plano (frecuencia más baja)
+        let fgH = Math.sin(wX * 0.004 + waveTime) * 15 + Math.sin(wX * 0.002 + waveTime * 1.5) * 10;
         let fgY = window.innerHeight - (waterBaseY + fgH);
         pathFg += `L ${px}, ${fgY} `;
 
-        let bgH = Math.sin(wX * 0.012 + waveTimeBg + 10) * 12 + Math.sin(wX * 0.005 + waveTimeBg * 1.2) * 15;
+        // Olas de fondo (frecuencia aún más baja)
+        let bgH = Math.sin(wX * 0.003 + waveTimeBg + 10) * 12 + Math.sin(wX * 0.0015 + waveTimeBg * 1.2) * 15;
         let bgY = window.innerHeight - (waterBaseY + bgH + 15);
         pathBg += `L ${px}, ${bgY} `;
       }
@@ -875,8 +878,9 @@
       document.getElementById('water-path-bg').setAttribute('d', pathBg);
 
       if (currentMode === 'barco') {
-         let waveDeriv = Math.cos(playerWorldX * 0.015 + waveTime) * 15 * 0.015 + Math.cos(playerWorldX * 0.008 + waveTime * 1.5) * 10 * 0.008;
-         rotationAngle = waveDeriv * (180 / Math.PI) * 1.5;
+         // Ajustamos la derivada a la nueva frecuencia y aumentamos el multiplicador final (x4) para que el balanceo siga notándose de forma suave
+         let waveDeriv = Math.cos(playerWorldX * 0.004 + waveTime) * 15 * 0.004 + Math.cos(playerWorldX * 0.002 + waveTime * 1.5) * 10 * 0.002;
+         rotationAngle = waveDeriv * (180 / Math.PI) * 4;
       }
     } else {
       dynamicBaseY_px = baseY_px + getTerrainHeight(playerWorldX, terrainSeeds);
