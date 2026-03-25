@@ -173,6 +173,7 @@
     align-items: center;
     gap: 15px;
     z-index: 50;
+    transition: opacity 0.5s;
   }
 
   .back-btn {
@@ -318,6 +319,7 @@
     background-position: center bottom;
     background-repeat: no-repeat;
     filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.35));
+    /* La transición normalmente está vacía, se llena al ganar */
   }
 
   .instructions {
@@ -348,46 +350,52 @@
     100% { transform: translateY(-100px) scale(0); opacity: 0; }
   }
 
-  /* --- VICTORIA --- */
-  #win-screen {
-    justify-content: center;
-    background: var(--btn-green);
-    color: white;
-    z-index: 100;
-  }
-  
-  #win-screen h1 {
-    font-size: 4rem;
-    margin-bottom: 30px;
-  }
-
-  .trophy {
-    font-size: 6rem;
-    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    margin-bottom: 10px;
+  /* --- EFECTOS DE VICTORIA (NUEVO) --- */
+  #win-glow {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    width: 600px;
+    height: 600px;
+    margin-left: -300px;
+    margin-bottom: -300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.6) 30%, transparent 65%);
+    z-index: 28; /* Detrás del jugador, delante del mundo */
+    opacity: 0;
+    transform: scale(0);
+    transition: all 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: none;
   }
 
-  @keyframes popIn {
-    0% { transform: scale(0); }
-    100% { transform: scale(1); }
-  }
-  
-  .play-btn {
-    background: var(--btn-green);
-    color: white;
-    font-family: 'Fredoka One', cursive;
-    font-size: 2rem;
-    padding: 15px 50px;
-    border: none;
-    border-radius: 30px;
-    box-shadow: 0 8px 0 var(--btn-green-dark);
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
+  #win-glow.active {
+    opacity: 1;
+    transform: scale(1);
+    animation: pulseGlow 2s infinite alternate, spinGlow 15s linear infinite;
   }
 
-  .play-btn:active {
-    transform: translateY(8px);
-    box-shadow: 0 0 0 var(--btn-green-dark);
+  @keyframes pulseGlow {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3); }
+  }
+  @keyframes spinGlow {
+    to { transform: scale(1) rotate(360deg); }
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 18px;
+    top: -20px;
+    z-index: 1000;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: fall linear forwards;
+    border-radius: 2px;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
   }
 
 </style>
@@ -409,7 +417,7 @@
 
   <!-- PANTALLA JUEGO -->
   <div id="game-screen" class="screen">
-    <div class="game-header">
+    <div class="game-header" id="game-header">
       <button class="back-btn" id="back-btn">⬅️</button>
       <div class="progress-bar">
         <div class="progress-fill" id="progress-fill"></div>
@@ -429,18 +437,14 @@
     <!-- PISTA Y JUGADOR (CAPA FRONTAL) -->
     <div id="track" class="parallax-layer"></div>
     
+    <!-- DESTELLO DE VICTORIA -->
+    <div id="win-glow"></div>
+
     <div id="player"></div>
 
     <div class="instructions" id="game-hints">
       Toca los lados para avanzar.<br>¡Desliza rápido para acelerar!
     </div>
-  </div>
-
-  <!-- PANTALLA VICTORIA -->
-  <div id="win-screen" class="screen">
-    <div class="trophy">🏆</div>
-    <h1>¡LLEGASTE!</h1>
-    <button class="play-btn" style="background: var(--btn-orange); box-shadow: 0 8px 0 var(--btn-orange-dark);" onpointerdown="goHome()">Volver al Menú</button>
   </div>
 
 <script>
@@ -449,8 +453,11 @@
   let isRunning = false;
   let progress = 0;
   let speed = 0;
-  let maxSpeed = 25;
-  let mediumSpeed = 4;
+  
+  // Modificados: Mayor velocidad máxima y velocidad media para toques sostenidos
+  let maxSpeed = 35; 
+  let mediumSpeed = 12; 
+  
   let gameLoopReq;
 
   // Touch
@@ -515,8 +522,6 @@
   // --- MATEMÁTICAS DEL TERRENO ---
   function getTerrainHeight(x, seeds) {
     if (!seeds) return 0;
-    
-    // Forzamos a que el terreno sea completamente plano antes del inicio y después de la meta
     if (x <= 0 || x >= TRACK_LENGTH) return 0;
     
     let fade = 1;
@@ -539,7 +544,15 @@
   function goHome() {
     isRunning = false;
     cancelAnimationFrame(gameLoopReq);
-    document.getElementById('win-screen').classList.remove('active');
+    
+    // Limpiar efectos de victoria
+    document.querySelectorAll('.confetti').forEach(el => el.remove());
+    document.getElementById('win-glow').classList.remove('active');
+    document.getElementById('game-header').style.opacity = '1';
+    
+    const player = document.getElementById('player');
+    player.style.transition = ''; // Resetear transición
+    
     document.getElementById('game-screen').classList.remove('active');
     document.getElementById('home-screen').classList.add('active');
   }
@@ -557,16 +570,13 @@
     farLayer.innerHTML = '';
 
     const cfg = config[currentMode];
-    
     document.getElementById('game-screen').style.background = `linear-gradient(180deg, ${cfg.skyTop} 0%, ${cfg.skyBottom} 100%)`;
 
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
     const svgHeight = 2000; 
 
-    // Activamos el agua para el barco y para el fondo del avión
     document.getElementById('dynamic-water').style.display = (currentMode === 'barco' || currentMode === 'avion') ? 'block' : 'none';
 
-    // 1. TERRENO COCHE Y TREN (Extendidos desde -3000 a TRACK_LENGTH + 3000 para evitar bloque vacío al iniciar)
     if (currentMode === 'coche' || currentMode === 'tren') {
         let bgSVG = `<svg width="${TRACK_LENGTH + 6000}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
         let pathBg = `M -3000,${svgHeight} `;
@@ -603,17 +613,13 @@
         fgSVG += `</svg>`;
         track.insertAdjacentHTML('beforeend', fgSVG);
       
-    } 
-    // 2. ISLAS DEL AVIÓN (Creciendo desde el agua)
-    else if (currentMode === 'avion') {
+    } else if (currentMode === 'avion') {
       let runwayY_px = (20 / 100) * window.innerHeight; 
-      let rStart = TRACK_LENGTH - 3000; // La pista de aterrizaje empieza 3000px antes de la meta
+      let rStart = TRACK_LENGTH - 3000; 
       
       let fgSVG = `<svg width="${TRACK_LENGTH + 6000}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
       
-      // Isla de Despegue (-3000 a 3200)
       let startIsland = `M -3000,${svgHeight} L -3000,${svgHeight - runwayY_px} L 2000,${svgHeight - runwayY_px} C 2500,${svgHeight - runwayY_px} 2800,${svgHeight} 3200,${svgHeight} Z`;
-      // Isla de Aterrizaje (Emerge del agua, se nivela antes de la meta y se extiende)
       let endIsland = `M ${rStart - 1000},${svgHeight} C ${rStart - 600},${svgHeight} ${rStart - 200},${svgHeight - runwayY_px} ${rStart + 500},${svgHeight - runwayY_px} L ${TRACK_LENGTH + 3000},${svgHeight - runwayY_px} L ${TRACK_LENGTH + 3000},${svgHeight} Z`;
 
       fgSVG += `<path d="${startIsland}" fill="#6BBF4E" />`;
@@ -624,7 +630,6 @@
       fgSVG += `<path d="${startDirt}" fill="none" stroke="#8B4513" stroke-width="25" />`;
       fgSVG += `<path d="${endDirt}" fill="none" stroke="#8B4513" stroke-width="25" />`;
 
-      // Decoración de pista (pavimento gris)
       fgSVG += `<line x1="-3000" y1="${svgHeight - runwayY_px - 5}" x2="1800" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
       fgSVG += `<line x1="${rStart + 700}" y1="${svgHeight - runwayY_px - 5}" x2="${TRACK_LENGTH + 3000}" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
       
@@ -632,7 +637,6 @@
       track.insertAdjacentHTML('beforeend', fgSVG);
     }
 
-    // Posición estricta de las líneas de Meta e Inicio
     let lineBottomPx = baseY_px;
     if (currentMode === 'avion') lineBottomPx = (20 / 100) * window.innerHeight;
 
@@ -656,7 +660,6 @@
         el.innerText = decorArray[Math.floor(Math.random() * decorArray.length)];
         
         let logicalPos;
-        // Restricción para que en avión no salgan árboles sobre el agua
         if (currentMode === 'avion' && isTrack) {
            if (Math.random() > 0.5) {
                logicalPos = -2000 + Math.random() * 4000; 
@@ -664,7 +667,6 @@
                logicalPos = (TRACK_LENGTH - 2000) + Math.random() * 4000; 
            }
         } else {
-           // Decoración repartida desde antes del comienzo hasta después del final
            logicalPos = -2000 + Math.random() * (TRACK_LENGTH + 4000); 
         }
         
@@ -678,7 +680,7 @@
         if (isTrack) {
             elHeight += getTerrainHeight(logicalPos, terrainSeeds);
             if (currentMode === 'avion') {
-                elHeight = (20 / 100) * window.innerHeight; // Nivel de la isla
+                elHeight = (20 / 100) * window.innerHeight; 
                 vOffset = (Math.random() - 0.2) * 50;
             } else if (currentMode === 'barco') {
                 vOffset = (Math.random() - 0.2) * 200;
@@ -816,10 +818,11 @@
     let targetSpeed = 0;
     const screenCenter = window.innerWidth / 2;
 
+    // Aceleración aumentada y reactiva al toque sostenido
     if (isTouching) {
       targetSpeed = (touchX > screenCenter) ? mediumSpeed : -mediumSpeed;
-      if (targetSpeed > 0 && speed < targetSpeed) speed += 0.5;
-      if (targetSpeed < 0 && speed > targetSpeed) speed -= 0.5;
+      if (targetSpeed > 0 && speed < targetSpeed) speed += 1.2; 
+      if (targetSpeed < 0 && speed > targetSpeed) speed -= 1.2;
     }
 
     speed *= 0.93; 
@@ -837,6 +840,14 @@
     progress += speed * 0.005; 
     if (progress < 0) progress = 0; 
     
+    // Si completamos la carrera, lanzamos el triunfo y terminamos este frame de actualización visual
+    if (progress >= 100) {
+      progress = 100;
+      document.getElementById('progress-fill').style.width = '100%';
+      winGame();
+      return; 
+    }
+    
     let playerWorldX = (progress / 100) * TRACK_LENGTH;
     
     // --- LÓGICA DEL AGUA ---
@@ -845,10 +856,8 @@
       let waveTime = time * 0.002;
       let waveTimeBg = time * 0.0015;
 
-      // El agua del avión la dibujamos un poco más abajo para que las islas destaquen por encima
       let waterBaseY = (currentMode === 'avion') ? window.innerHeight * 0.15 : baseY_px;
 
-      // Generamos olas más anchas y suaves (bajando la frecuencia espacial a 0.004 y 0.002)
       let waveH = Math.sin(playerWorldX * 0.004 + waveTime) * 15 + Math.sin(playerWorldX * 0.002 + waveTime * 1.5) * 10;
       if (currentMode === 'barco') {
          dynamicBaseY_px = waterBaseY + waveH;
@@ -859,13 +868,10 @@
 
       for(let px = -50; px <= window.innerWidth + 50; px += 50) {
         let wX = playerWorldX + (px - window.innerWidth/2);
-
-        // Olas de primer plano (frecuencia más baja)
         let fgH = Math.sin(wX * 0.004 + waveTime) * 15 + Math.sin(wX * 0.002 + waveTime * 1.5) * 10;
         let fgY = window.innerHeight - (waterBaseY + fgH);
         pathFg += `L ${px}, ${fgY} `;
 
-        // Olas de fondo (frecuencia aún más baja)
         let bgH = Math.sin(wX * 0.003 + waveTimeBg + 10) * 12 + Math.sin(wX * 0.0015 + waveTimeBg * 1.2) * 15;
         let bgY = window.innerHeight - (waterBaseY + bgH + 15);
         pathBg += `L ${px}, ${bgY} `;
@@ -878,7 +884,6 @@
       document.getElementById('water-path-bg').setAttribute('d', pathBg);
 
       if (currentMode === 'barco') {
-         // Ajustamos la derivada a la nueva frecuencia y aumentamos el multiplicador final (x4) para que el balanceo siga notándose de forma suave
          let waveDeriv = Math.cos(playerWorldX * 0.004 + waveTime) * 15 * 0.004 + Math.cos(playerWorldX * 0.002 + waveTime * 1.5) * 10 * 0.002;
          rotationAngle = waveDeriv * (180 / Math.PI) * 4;
       }
@@ -912,35 +917,31 @@
       }
     } else if (currentMode === 'avion') {
       let runwayY_px = (20 / 100) * window.innerHeight;
-      let cruiseY_px = baseY_px; // 60% altitud de vuelo
+      let cruiseY_px = baseY_px; 
       const tDist = 2000;
       let rStart = TRACK_LENGTH - 3000;
       let descentStart = rStart - 1500; 
       let descentEnd = rStart + 500;   
 
-      // Despegue (Isla inicial)
       if (playerWorldX < tDist) {
         let p = playerWorldX / tDist; 
         yPos = runwayY_px + (cruiseY_px - runwayY_px) * (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
         ySpeed = 0;
         if (speed < mediumSpeed) speed += 0.2;
       } 
-      // Descenso hacia la isla final
       else if (playerWorldX > descentStart && playerWorldX <= descentEnd) {
         let p = (playerWorldX - descentStart) / (descentEnd - descentStart);
         yPos = cruiseY_px - (cruiseY_px - runwayY_px) * (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
         ySpeed = 0;
       } 
-      // Aterrizaje completado (corriendo sobre la pista)
       else if (playerWorldX > descentEnd) {
         yPos = runwayY_px;
         ySpeed = 0;
         if (speed < mediumSpeed) speed += 0.2; 
       } 
-      // Vuelo normal
       else {
         ySpeed *= 0.92;
-        if (yPos < cruiseY_px * 0.5) { // Limitar para que no toque el agua accidentalmente
+        if (yPos < cruiseY_px * 0.5) { 
           yPos = cruiseY_px * 0.5;
           if (ySpeed < 0) ySpeed = 0;
         }
@@ -965,12 +966,12 @@
       let descentEnd = rStart + 500;
 
       if (playerWorldX < tDist) {
-        rotationAngle = 15 * Math.sin((playerWorldX / tDist) * Math.PI); // Cabeceo al despegar
+        rotationAngle = 15 * Math.sin((playerWorldX / tDist) * Math.PI); 
       } else if (playerWorldX > descentStart && playerWorldX < descentEnd) {
         let p = (playerWorldX - descentStart) / (descentEnd - descentStart);
-        rotationAngle = -15 * Math.sin(p * Math.PI); // Cabeceo hacia abajo al aterrizar
+        rotationAngle = -15 * Math.sin(p * Math.PI); 
       } else if (playerWorldX >= descentEnd) {
-        rotationAngle = 0; // Nivelado en la pista final
+        rotationAngle = 0; 
       } else {
         rotationAngle = ySpeed * 1.5;
       }
@@ -984,11 +985,6 @@
     
     player.style.bottom = yPos + 'px';
     player.style.transform = `translateX(-50%) rotate(${-rotationAngle}deg) scaleX(var(--facing))`;
-    
-    if (progress >= 100) {
-      progress = 100;
-      winGame();
-    }
     
     document.getElementById('progress-fill').style.width = progress + '%';
     
@@ -1004,12 +1000,45 @@
     gameLoopReq = requestAnimationFrame(gameLoop);
   }
 
+  // --- NUEVA SECUENCIA DE TRIUNFO ---
   function winGame() {
-    isRunning = false;
+    isRunning = false; // Detiene la física del juego
+    document.getElementById('game-hints').style.opacity = '0';
+    document.getElementById('game-header').style.opacity = '0'; // Oculta UI
+
+    const player = document.getElementById('player');
+    const glow = document.getElementById('win-glow');
+
+    // 1. Animación del jugador al centro
+    player.style.transition = 'all 1.5s cubic-bezier(0.25, 1, 0.5, 1)';
+    player.style.bottom = '50%';
+    player.style.transform = 'translateX(-50%) translateY(50%) scale(3.5) rotate(0deg)';
+
+    // 2. Destello brillante detrás
+    glow.classList.add('active');
+
+    // 3. Lluvia de confeti
+    spawnConfetti();
+
+    // 4. Esperar unos segundos y volver a inicio
     setTimeout(() => {
-      document.getElementById('game-screen').classList.remove('active');
-      document.getElementById('win-screen').classList.add('active');
-    }, 500);
+      goHome();
+    }, 4500); // 4.5 segundos de celebración
+  }
+
+  function spawnConfetti() {
+    const colors = ['#FFD700', '#FF6347', '#00BFFF', '#32CD32', '#FF69B4', '#FFA500'];
+    const gameScreen = document.getElementById('game-screen');
+    
+    for (let i = 0; i < 100; i++) {
+      const conf = document.createElement('div');
+      conf.className = 'confetti';
+      conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      conf.style.left = (Math.random() * 100) + 'vw';
+      conf.style.animationDelay = (Math.random() * 1.5) + 's';
+      conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      gameScreen.appendChild(conf);
+    }
   }
 
 </script>
