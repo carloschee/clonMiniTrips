@@ -413,10 +413,10 @@
     </div>
 
     <div class="mode-selector">
-      <button class="mode-btn" data-mode="coche" onclick="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
-      <button class="mode-btn" data-mode="tren" onclick="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
-      <button class="mode-btn" data-mode="barco" onclick="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
-      <button class="mode-btn" data-mode="avion" onclick="selectMode('avion')" style="background-image: url('sprites/avion.png');"></button>
+      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
+      <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
+      <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
+      <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')" style="background-image: url('sprites/avion.png');"></button>
     </div>
   </div>
 
@@ -447,7 +447,7 @@
     <div class="trophy">🏆</div>
     <h1>¡LLEGASTE!</h1>
     <div class="time-text">Tiempo: <span id="time-display">0.0</span>s</div>
-    <button class="play-btn" style="background: var(--btn-orange); box-shadow: 0 8px 0 var(--btn-orange-dark);" onclick="goHome()">Volver al Menú</button>
+    <button class="play-btn" style="background: var(--btn-orange); box-shadow: 0 8px 0 var(--btn-orange-dark);" onpointerdown="goHome()">Volver al Menú</button>
   </div>
 
 <script>
@@ -574,7 +574,8 @@
     document.getElementById('home-screen').classList.add('active');
   }
 
-  document.getElementById('back-btn').addEventListener('click', goHome);
+  // Cambio de 'click' a 'pointerdown' para el botón de regreso
+  document.getElementById('back-btn').addEventListener('pointerdown', goHome);
 
   function generateTrack() {
     const track = document.getElementById('track');
