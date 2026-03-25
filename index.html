@@ -772,7 +772,16 @@
     speed *= 0.93; // Fricción
     if (speed > maxSpeed) speed = maxSpeed;
     if (speed < -maxSpeed) speed = -maxSpeed;
-    if (!isTouching && Math.abs(speed) < 0.2) speed = 0;
+    
+    // Nueva lógica de detención o auto-avance
+    if (!isTouching) {
+      if (currentMode === 'avion') {
+        // El avión no puede detenerse: propulsión automática hacia adelante
+        if (speed < mediumSpeed) speed += 0.2;
+      } else if (Math.abs(speed) < 0.2) {
+        speed = 0; // Los demás vehículos se detienen
+      }
+    }
 
     // Progresión 10 veces más lenta que antes (0.005 vs 0.05) para un juego más largo
     progress += speed * 0.005; 
@@ -808,18 +817,20 @@
       // Opacidad para hacer el efecto de inmersión más realista
       document.getElementById('player').style.opacity = yPos < baseY_px - 10 ? '0.7' : '1';
     } else if (currentMode === 'avion') {
-      let currentGravity = isTouching ? -0.1 : gravity * 0.2; // Asciende levemente al tocar
-      ySpeed -= currentGravity;
-      ySpeed *= 0.95; // Resistencia aerodinámica
+      // Vuelo estable: sin gravedad que lo jale hacia abajo constantemente
+      ySpeed *= 0.92; // Resistencia aerodinámica frena el impulso suavemente
       
       if (yPos < baseY_px * 0.3) {
         yPos = baseY_px * 0.3; // Altura mínima de vuelo
-        if (ySpeed < 0) ySpeed *= -0.5;
+        if (ySpeed < 0) ySpeed = 0;
       }
-      if (yPos > window.innerHeight - 80) {
-        yPos = window.innerHeight - 80; // Techo máximo
-        ySpeed = 0;
-      }
+    }
+
+    // Límite superior (techo) de la pantalla para TODOS los transportes
+    const maxVisibleHeight = window.innerHeight - 100; // 100px es el tamaño del jugador
+    if (yPos > maxVisibleHeight) {
+      yPos = maxVisibleHeight;
+      if (ySpeed > 0) ySpeed = 0; // Detiene el ascenso brusco al tocar el techo
     }
 
     // Limitar velocidad vertical extrema
