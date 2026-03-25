@@ -99,8 +99,10 @@
   }
 
   .title-card h1 {
-    font-size: 3rem;
+    font-size: clamp(2.2rem, 8vw, 3.5rem);
     color: var(--btn-orange);
+    white-space: nowrap;
+    margin: 0;
   }
 
   .mode-selector {
@@ -409,7 +411,7 @@
   <!-- PANTALLA DE INICIO -->
   <div id="home-screen" class="screen active">
     <div class="title-card">
-      <h1>Mini<br>Trips!</h1>
+      <h1>Mini Trips!</h1>
     </div>
 
     <div class="mode-selector">
@@ -608,6 +610,23 @@
       }
       svgHTML += `</svg>`;
       track.insertAdjacentHTML('beforeend', svgHTML);
+    } else if (currentMode === 'avion') {
+      // DIBUJAR PISTAS DE ATERRIZAJE PARA EL AVIÓN
+      let runwayY_px = (20 / 100) * window.innerHeight; // Las pistas estarán al 20% de altura
+      let svgHTML = `<svg id="terrain-svg" width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible; z-index: 5;">`;
+
+      // Base Verde y Pista de Inicio (Despegue extendido hacia atrás para llenar la pantalla)
+      svgHTML += `<rect x="-2000" y="${svgHeight - runwayY_px}" width="4000" height="2000" fill="#6BBF4E" />`;
+      svgHTML += `<rect x="-2000" y="${svgHeight - runwayY_px}" width="4000" height="25" fill="#555555" />`;
+      svgHTML += `<line x1="-2000" y1="${svgHeight - runwayY_px + 12}" x2="2000" y2="${svgHeight - runwayY_px + 12}" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="40, 60" />`;
+
+      // Base Verde y Pista de Meta (Aterrizaje extendido hacia adelante)
+      svgHTML += `<rect x="${TRACK_LENGTH - 2000}" y="${svgHeight - runwayY_px}" width="4000" height="2000" fill="#6BBF4E" />`;
+      svgHTML += `<rect x="${TRACK_LENGTH - 2000}" y="${svgHeight - runwayY_px}" width="4000" height="25" fill="#555555" />`;
+      svgHTML += `<line x1="${TRACK_LENGTH - 2000}" y1="${svgHeight - runwayY_px + 12}" x2="${TRACK_LENGTH + 2000}" y2="${svgHeight - runwayY_px + 12}" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="40, 60" />`;
+
+      svgHTML += `</svg>`;
+      track.insertAdjacentHTML('beforeend', svgHTML);
     }
 
     // --- GENERAR CHARCOS ---
@@ -627,18 +646,22 @@
         }
     }
 
+    // Altura dinámica para las banderas de inicio/meta
+    let lineBottomPos = cfg.bottomPos;
+    if (currentMode === 'avion') lineBottomPos = '20%'; // Banderas en la pista para el avión
+
     // 1. Línea de Inicio
     const start = document.createElement('div');
     start.className = 'start-line';
     start.style.left = '0px';
-    start.style.bottom = cfg.bottomPos;
+    start.style.bottom = lineBottomPos;
     track.appendChild(start);
 
     // 2. Línea de Meta
     const finish = document.createElement('div');
     finish.className = 'finish-line';
     finish.style.left = TRACK_LENGTH + 'px';
-    finish.style.bottom = cfg.bottomPos;
+    finish.style.bottom = lineBottomPos;
     track.appendChild(finish);
 
     // 3. Marcadores de Regresiva (del 10 al 1 distribuidos equitativamente)
