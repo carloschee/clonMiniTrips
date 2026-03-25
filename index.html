@@ -36,8 +36,6 @@
     --btn-orange-dark: #E06820;
     --btn-blue: #4FC3F7;
     --btn-blue-dark: #29B6F6;
-
-    /* Colores del entorno generados por JS, se inyectan en style */
   }
 
   /* =========================================================================
@@ -130,19 +128,16 @@
     max-width: 110px;
     max-height: 110px;
     border-radius: clamp(12px, 4vmin, 25px);
-    border: none;
+    border: 3px solid white;
     background-color: white;
-    background-size: 60%;
-    background-position: center;
-    background-repeat: no-repeat;
-    box-shadow: 0 6px 0 var(--sky-bottom);
+    box-shadow: 0 6px 0 var(--sky-bottom), 0 8px 10px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    font-size: 2.5rem; /* Fallback si no hay imagen */
+    
+    /* Configuración del Spritesheet para botones */
+    background-image: url('IMG_2880.jpg');
+    background-size: 200% 200%;
+    background-repeat: no-repeat;
   }
 
   .mode-btn:active {
@@ -224,11 +219,10 @@
     will-change: transform;
   }
 
-  #parallax-far { z-index: 1; }  /* Cielo lejano, montañas gigantes, nubes */
-  #parallax-mid { z-index: 2; }  /* Montañas medianas, colinas, árboles de fondo */
-  #track { z-index: 15; }        /* Terreno jugable, vegetación frontal, obstáculos */
+  #parallax-far { z-index: 1; }  
+  #parallax-mid { z-index: 2; }  
+  #track { z-index: 15; }        
 
-  /* SVG dinámico para las olas del barco (se sitúa entre mid y track) */
   #dynamic-water {
     position: absolute;
     bottom: 0;
@@ -311,22 +305,28 @@
     transform: translateX(-50%);
   }
 
+  /* --- SPRITE DEL JUGADOR --- */
   #player {
     position: absolute;
     bottom: 20%;
     left: 50%;
-    --facing: 1;
+    --facing: -1; /* Asumimos que los dibujos originales miran a la izquierda */
     transform: translateX(-50%) scaleX(var(--facing));
-    font-size: 5rem;
     z-index: 30;
-    width: 100px;
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-size: contain;
+    
+    /* Estilo "Sticker" para el sprite */
+    width: 90px;
+    height: 90px;
+    border-radius: 20px; 
+    border: 3px solid white;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+    background-color: white;
+    
+    /* Configuración Spritesheet */
+    background-image: url('IMG_2880.jpg');
+    background-size: 200% 200%;
     background-repeat: no-repeat;
-    background-position: center;
+    background-position: 0% 0%; /* Por defecto coche */
   }
 
   .instructions {
@@ -409,10 +409,11 @@
       <h1>Mini Trips!</h1>
     </div>
     <div class="mode-selector">
-      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')">🚗</button>
-      <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')">🚂</button>
-      <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')">⛵</button>
-      <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')">✈️</button>
+      <!-- Los botones ahora usan la imagen como fondo (spritesheet) -->
+      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-position: 0% 0%;"></button>
+      <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-position: 100% 0%;"></button>
+      <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-position: 0% 100%;"></button>
+      <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')" style="background-position: 100% 100%;"></button>
     </div>
   </div>
 
@@ -438,7 +439,7 @@
     <!-- PISTA Y JUGADOR (CAPA FRONTAL) -->
     <div id="track" class="parallax-layer"></div>
     
-    <div id="player">🚗</div>
+    <div id="player"></div>
 
     <div class="instructions" id="game-hints">
       Toca los lados para avanzar.<br>¡Desliza rápido para acelerar!
@@ -478,33 +479,33 @@
 
   // Terreno
   let terrainSeeds = null;
-  let terrainSeedsBg = null; // Semillas para las montañas de fondo
+  let terrainSeedsBg = null; 
   const TRACK_LENGTH = 20000; 
 
-  // --- CONFIGURACIÓN DE MODOS ---
+  // --- CONFIGURACIÓN DE MODOS (CON POSICIONES DEL SPRITESHEET) ---
   const config = {
     coche: { 
-      emoji: '🚗', bottomPos: '25%',
+      bgPos: '0% 0%', bottomPos: '25%',
       skyTop: '#6CB2EB', skyBottom: '#BBE3FA',
-      fgColor: '#6BBF4E', fgStroke: '#4E9B35', fgFill: '#5DAF42', // Verdes vivos
-      bgColor: '#86CD6A', bgStroke: 'none', bgFill: '#79BC5F',     // Verdes apagados lejanos
+      fgColor: '#6BBF4E', fgStroke: '#4E9B35', fgFill: '#5DAF42',
+      bgColor: '#86CD6A', bgStroke: 'none', bgFill: '#79BC5F',     
       particleColors: ['#FFD93D', '#FFFFFF', '#AAAAAA'],
       decorNear: ['🌲', '🌳', '🪨', '🌻', '🛑', '🪵', '🏕️'],
       decorMid: ['🌲', '🌳', '🏡', '🐑', '🐄'],
       decorFar: ['☁️', '☀️', '🦅', '⛰️']
     },
     tren: { 
-      emoji: '🚂', bottomPos: '25%',
-      skyTop: '#FF9A9E', skyBottom: '#FECFEF', // Atardecer
-      fgColor: '#A0522D', fgStroke: '#6D381D', fgFill: '#8A4525', // Cañón cálido
-      bgColor: '#C2754E', bgStroke: '#995635', bgFill: '#B2623C', // Montañas rojizas traseras
+      bgPos: '100% 0%', bottomPos: '25%',
+      skyTop: '#FF9A9E', skyBottom: '#FECFEF', 
+      fgColor: '#A0522D', fgStroke: '#6D381D', fgFill: '#8A4525', 
+      bgColor: '#C2754E', bgStroke: '#995635', bgFill: '#B2623C', 
       particleColors: ['#555555', '#333333', '#888888', '#FFD93D'],
       decorNear: ['🌵', '🪨', '🪵', '🛤️', '🤠', '🐍'],
       decorMid: ['🛖', '🌵', '🏜️', '⛰️', '🦅'],
       decorFar: ['☁️', '⛅', '🌅', '🏜️']
     },
     barco: { 
-      emoji: '⛵', bottomPos: '35%',
+      bgPos: '0% 100%', bottomPos: '35%',
       skyTop: '#40C4FF', skyBottom: '#E1F5FE',
       particleColors: ['#FFFFFF', '#B8E4F9', '#4FC3F7'],
       decorNear: ['🛟', '🐟', '🐙', '⚓', '🐬'],
@@ -512,7 +513,7 @@
       decorFar: ['☁️', '☀️', '🦅', '☁️']
     },
     avion: { 
-      emoji: '✈️', bottomPos: '60%',
+      bgPos: '100% 100%', bottomPos: '60%',
       skyTop: '#1E88E5', skyBottom: '#90CAF9',
       particleColors: ['#FFFFFF', '#FFFFFF', '#B8E4F9'],
       decorNear: ['🦅', '🎈', '🚁', '✨'],
@@ -525,7 +526,6 @@
   function getTerrainHeight(x, seeds) {
     if (!seeds) return 0;
     
-    // Suavizado en los bordes para que siempre empiece y termine plano
     let fade = 1;
     if (x < 1500) fade = x / 1500;
     else if (x > TRACK_LENGTH - 1500) fade = (TRACK_LENGTH - x) / 1500;
@@ -565,45 +565,38 @@
 
     const cfg = config[currentMode];
     
-    // Cambiar color del cielo
     document.getElementById('game-screen').style.background = `linear-gradient(180deg, ${cfg.skyTop} 0%, ${cfg.skyBottom} 100%)`;
 
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
     const svgHeight = 2000; 
 
-    // Mostrar/ocultar el agua del barco
     document.getElementById('dynamic-water').style.display = (currentMode === 'barco') ? 'block' : 'none';
 
     // 1. TERRENO COCHE Y TREN (POLÍGONOS SÓLIDOS)
     if (currentMode === 'coche' || currentMode === 'tren') {
-        
-        // ---- CAPA MEDIANA (Montañas de Fondo) ----
         let bgSVG = `<svg width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
         let pathBg = `M 0,${svgHeight} `;
         for (let x = 0; x <= TRACK_LENGTH; x += 100) {
             pathBg += `L ${x},${svgHeight - (baseY_px + 80 + getTerrainHeight(x, terrainSeedsBg))} `;
         }
-        pathBg += `L ${TRACK_LENGTH},${svgHeight} Z`; // Cierra el polígono hasta abajo
+        pathBg += `L ${TRACK_LENGTH},${svgHeight} Z`; 
         bgSVG += `<path d="${pathBg}" fill="${cfg.bgFill}" stroke="${cfg.bgStroke}" stroke-width="10" stroke-linejoin="round"/>`;
         bgSVG += `</svg>`;
         midLayer.insertAdjacentHTML('beforeend', bgSVG);
 
-        // ---- CAPA FRONTAL (Suelo Jugable) ----
         let fgSVG = `<svg width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
-        let pathFg = `M 0,${svgHeight} `; // Inicia abajo a la izquierda
-        let pathLine = `M 0,${svgHeight - baseY_px} `; // Solo la línea superior para texturas
+        let pathFg = `M 0,${svgHeight} `; 
+        let pathLine = `M 0,${svgHeight - baseY_px} `; 
         
         for (let x = 0; x <= TRACK_LENGTH; x += 50) {
             let ty = svgHeight - (baseY_px + getTerrainHeight(x, terrainSeeds));
             pathFg += `L ${x},${ty} `;
             pathLine += `L ${x},${ty} `;
         }
-        pathFg += `L ${TRACK_LENGTH},${svgHeight} Z`; // Cierra abajo a la derecha
+        pathFg += `L ${TRACK_LENGTH},${svgHeight} Z`; 
 
-        // Relleno de la tierra (sin espacios vacíos)
         fgSVG += `<path d="${pathFg}" fill="${cfg.fgFill}" />`;
         
-        // Textura superior (Pasto/Vías)
         if (currentMode === 'coche') {
             fgSVG += `<path d="${pathLine}" fill="none" stroke="${cfg.fgStroke}" stroke-width="45" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, 5)"/>`;
             fgSVG += `<path d="${pathLine}" fill="none" stroke="${cfg.fgColor}" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -617,7 +610,6 @@
         track.insertAdjacentHTML('beforeend', fgSVG);
       
     } else if (currentMode === 'avion') {
-      // 2. TERRENO AVIÓN (ISLAS SÓLIDAS)
       let runwayY_px = (20 / 100) * window.innerHeight; 
       let endX = TRACK_LENGTH + 2000; 
       
@@ -640,7 +632,6 @@
       track.insertAdjacentHTML('beforeend', fgSVG);
     }
 
-    // --- DECORACIONES Y ELEMENTOS NATURALES ---
     let lineBottomPos = cfg.bottomPos;
     if (currentMode === 'avion') lineBottomPos = '20%';
 
@@ -656,7 +647,6 @@
     finish.style.bottom = lineBottomPos;
     track.appendChild(finish);
 
-    // Sembrar vegetación y objetos según la capa
     function addDecor(layer, decorArray, count, speedMultiplier, isTrack = false) {
       if (!decorArray || decorArray.length === 0) return;
       for (let i = 0; i < count; i++) {
@@ -664,7 +654,6 @@
         el.className = isTrack ? 'track-decor' : 'parallax-decor';
         el.innerText = decorArray[Math.floor(Math.random() * decorArray.length)];
         
-        // Posición ajustada a la velocidad de la capa para que cubran el viaje
         const logicalPos = 200 + Math.random() * TRACK_LENGTH; 
         const renderPos = logicalPos * speedMultiplier;
         el.style.left = renderPos + 'px';
@@ -681,14 +670,13 @@
                 vOffset = (Math.random() - 0.5) * 40;
             }
             scale = 0.6 + Math.random() * 0.8;
-            el.style.zIndex = Math.random() > 0.5 ? 14 : 16; // Frente o detrás del jugador
+            el.style.zIndex = Math.random() > 0.5 ? 14 : 16; 
         } else if (layer === midLayer) {
             elHeight += getTerrainHeight(logicalPos, terrainSeedsBg) + 80;
             vOffset = Math.random() * 50;
-            scale = 0.4 + Math.random() * 0.4; // Más pequeños en el fondo
+            scale = 0.4 + Math.random() * 0.4; 
             el.style.opacity = 0.8;
         } else {
-            // Far Layer (cielo muy alto)
             elHeight = window.innerHeight * (0.6 + Math.random() * 0.3);
             scale = 1 + Math.random();
             el.style.opacity = 0.6;
@@ -704,7 +692,6 @@
     addDecor(midLayer, cfg.decorMid, 40, 0.5);
     addDecor(farLayer, cfg.decorFar, 30, 0.2);
 
-    // Marcadores de distancia
     for (let i = 1; i <= 10; i++) {
         const marker = document.createElement('div');
         marker.className = 'track-marker';
@@ -720,9 +707,9 @@
     const player = document.getElementById('player');
     const cfg = config[currentMode];
 
-    player.innerHTML = cfg.emoji;
+    // Asignar el sprite correspondiente basado en la posición definida en cfg
+    player.style.backgroundPosition = cfg.bgPos;
 
-    // Generar montañas únicas
     terrainSeeds = {
       a1: 40 + Math.random() * 40, f1: 500 + Math.random() * 500,
       a2: 25 + Math.random() * 25, f2: 250 + Math.random() * 200,
@@ -837,7 +824,6 @@
     
     let playerWorldX = (progress / 100) * TRACK_LENGTH;
     
-    // --- LÓGICA DE AGUA FLUIDA (MODO BARCO) ---
     if (currentMode === 'barco') {
       let time = Date.now();
       let waveTime = time * 0.002;
@@ -874,7 +860,6 @@
       dynamicBaseY_px = baseY_px + getTerrainHeight(playerWorldX, terrainSeeds);
     }
 
-    // --- FÍSICA VERTICAL ---
     yPos += ySpeed;
 
     if (currentMode === 'coche') {
@@ -928,7 +913,6 @@
       if (ySpeed > 0) ySpeed = 0;
     }
     
-    // --- INCLINACIÓN VISUAL ---
     if (currentMode === 'coche' || currentMode === 'tren') {
       const th1 = getTerrainHeight(playerWorldX, terrainSeeds);
       const th2 = getTerrainHeight(playerWorldX + 20, terrainSeeds); 
@@ -944,10 +928,14 @@
       }
     }
 
-    // --- RENDERIZADO VISUAL ---
+    // --- RENDERIZADO DEL SPRITE ---
     const player = document.getElementById('player');
-    const facing = speed < -0.5 ? -1 : (speed > 0.5 ? 1 : player.style.getPropertyValue('--facing') || 1);
-    player.style.setProperty('--facing', facing);
+    
+    // Asumimos que los dibujos están hechos mirando a la izquierda (-1)
+    // Si la velocidad es positiva (>0.5) giramos el sprite (1)
+    const currentFacing = parseFloat(player.style.getPropertyValue('--facing') || -1);
+    const newFacing = speed > 0.5 ? 1 : (speed < -0.5 ? -1 : currentFacing);
+    player.style.setProperty('--facing', newFacing);
     
     player.style.bottom = yPos + 'px';
     player.style.transform = `translateX(-50%) rotate(${-rotationAngle}deg) scaleX(var(--facing))`;
@@ -959,15 +947,9 @@
     
     document.getElementById('progress-fill').style.width = progress + '%';
     
-    // --- EFECTO PARALLAX ---
-    // La pista principal se mueve a velocidad 1.0x
     const trackX = screenCenter - playerWorldX;
     document.getElementById('track').style.transform = `translateX(${trackX}px)`;
-    
-    // Capa Media se mueve a velocidad 0.5x
     document.getElementById('parallax-mid').style.transform = `translateX(${trackX * 0.5}px)`;
-    
-    // Capa Lejana se mueve a velocidad 0.2x
     document.getElementById('parallax-far').style.transform = `translateX(${trackX * 0.2}px)`;
 
     if (Math.abs(speed) > mediumSpeed * 1.5 && Math.random() > 0.6) {
