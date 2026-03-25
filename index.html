@@ -348,7 +348,7 @@
     transform: translateX(-50%) scaleX(var(--facing));
     font-size: 5rem;
     z-index: 30;
-    transition: bottom 0.3s;
+    /* transition: bottom 0.3s; - Removida para usar motor de gravedad manual */
     width: 100px;
     height: 100px;
     display: flex;
@@ -512,11 +512,19 @@
   let startTime = 0;
   let gameLoopReq;
 
-  // Variables de control táctil
+  // Variables de control táctil y vertical
   let isTouching = false;
   let touchX = 0;
   let lastTouchX = 0;
+  let touchY = 0;
+  let lastTouchY = 0;
   let lastTouchTime = 0;
+
+  // Motor de Gravedad
+  let yPos = 0;
+  let ySpeed = 0;
+  let baseY_px = 0;
+  let gravity = 0.6;
 
   // Longitud de la pista física (Niveles 10x más largos)
   const TRACK_LENGTH = 20000;
@@ -657,6 +665,13 @@
       player.innerHTML = cfg.emoji;
     }
 
+    // Configurar Motor de Gravedad inicial
+    baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
+    yPos = baseY_px;
+    ySpeed = 0;
+    player.style.bottom = yPos + 'px';
+    player.style.opacity = '1';
+
     // Generar nuevo nivel
     generateTrack();
 
@@ -685,6 +700,8 @@
     isTouching = true;
     touchX = e.clientX;
     lastTouchX = e.clientX;
+    touchY = e.clientY;
+    lastTouchY = e.clientY;
     lastTouchTime = Date.now();
     hideHints();
   });
@@ -694,13 +711,22 @@
     const now = Date.now();
     const dt = now - lastTouchTime;
     touchX = e.clientX;
+    touchY = e.clientY;
     
     if (dt > 0) {
-      const swipeVelocity = (touchX - lastTouchX) / dt;
-      speed += swipeVelocity * 6; // Sensibilidad del acelerón
+      const swipeVelocityX = (touchX - lastTouchX) / dt;
+      speed += swipeVelocityX * 6; // Sensibilidad del acelerón horizontal
+      
+      // Físicas Verticales (Swipe arriba/abajo)
+      const swipeVelocityY = (lastTouchY - touchY) / dt; // Positivo es hacia ARRIBA
+      if (currentMode !== 'tren') {
+        let clampedY = Math.max(-15, Math.min(15, swipeVelocityY));
+        ySpeed += clampedY * 1.5; // Fuerza del salto o inmersión
+      }
     }
     
     lastTouchX = touchX;
+    lastTouchY = touchY;
     lastTouchTime = now;
   });
 
@@ -752,6 +778,58 @@
     progress += speed * 0.005; 
     if (progress < 0) progress = 0; 
     
+    // --- MOTOR DE GRAVEDAD Y FÍSICA VERTICAL ---
+    yPos += ySpeed;
+
+    if (currentMode === 'coche') {
+      let currentGravity = isTouching ? gravity * 0.15 : gravity; // Flota si se sostiene en el aire
+      ySpeed -= currentGravity;
+      if (yPos <= baseY_px) {
+        yPos = baseY_px;
+        if (ySpeed < -3) ySpeed = Math.abs(ySpeed) * 0.3; // Bote contra el piso
+        else ySpeed = 0;
+      }
+    } else if (currentMode === 'tren') {
+      yPos = baseY_px; // Tren 100% pegado a sus rieles
+      ySpeed = 0;
+    } else if (currentMode === 'barco') {
+      if (yPos > baseY_px) {
+        // En el aire (brincando)
+        let currentGravity = isTouching ? gravity * 0.2 : gravity;
+        ySpeed -= currentGravity;
+      } else if (yPos < baseY_px) {
+        // Sumergido debajo del agua
+        let buoyancy = isTouching ? gravity * 0.1 : gravity * 0.5;
+        ySpeed += buoyancy; // El agua lo empuja a flotar
+        ySpeed *= 0.92; // Fricción del agua
+      } else {
+        ySpeed *= 0.8; // Fricción suave en la superficie
+      }
+      // Opacidad para hacer el efecto de inmersión más realista
+      document.getElementById('player').style.opacity = yPos < baseY_px - 10 ? '0.7' : '1';
+    } else if (currentMode === 'avion') {
+      let currentGravity = isTouching ? -0.1 : gravity * 0.2; // Asciende levemente al tocar
+      ySpeed -= currentGravity;
+      ySpeed *= 0.95; // Resistencia aerodinámica
+      
+      if (yPos < baseY_px * 0.3) {
+        yPos = baseY_px * 0.3; // Altura mínima de vuelo
+        if (ySpeed < 0) ySpeed *= -0.5;
+      }
+      if (yPos > window.innerHeight - 80) {
+        yPos = window.innerHeight - 80; // Techo máximo
+        ySpeed = 0;
+      }
+    }
+
+    // Limitar velocidad vertical extrema
+    if (ySpeed > 25) ySpeed = 25;
+    if (ySpeed < -25) ySpeed = -25;
+
+    // Actualizar CSS Position
+    document.getElementById('player').style.bottom = yPos + 'px';
+    // -------------------------------------------
+
     if (progress >= 100) {
       progress = 100;
       winGame();
