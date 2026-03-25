@@ -10,7 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mini Trips">
-<meta name="theme-color" content="#87CEEB">
+<!-- CORRECCIÓN: El color de tema inicial ahora es el crema del menú -->
+<meta name="theme-color" id="theme-meta" content="#FFF8EC">
 
 <title>Mini Trips!</title>
 
@@ -53,9 +54,12 @@
     padding: 0;
     width: 100%;
     height: 100%;
+    min-height: 100dvh; /* CORRECCIÓN: Asegura que cubra pantallas móviles modernas */
     overflow: hidden;
     font-family: 'Nunito', sans-serif;
-    background-color: var(--sky-top);
+    /* CORRECCIÓN: Fondo crema base para evitar rectángulos azules en los bordes */
+    background-color: var(--ui-bg); 
+    transition: background-color 0.5s ease;
     touch-action: none;
   }
 
@@ -74,6 +78,7 @@
     left: 0;
     width: 100%;
     height: 100%;
+    min-height: 100dvh; /* Asegura cubrir todo el alto real */
     display: none;
     flex-direction: column;
     align-items: center;
@@ -319,7 +324,6 @@
     background-position: center bottom;
     background-repeat: no-repeat;
     filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.35));
-    /* La transición normalmente está vacía, se llena al ganar */
   }
 
   .instructions {
@@ -350,7 +354,7 @@
     100% { transform: translateY(-100px) scale(0); opacity: 0; }
   }
 
-  /* --- EFECTOS DE VICTORIA (NUEVO) --- */
+  /* --- EFECTOS DE VICTORIA --- */
   #win-glow {
     position: absolute;
     left: 50%;
@@ -360,7 +364,7 @@
     margin-left: -300px;
     margin-bottom: -300px;
     background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,215,0,0.6) 30%, transparent 65%);
-    z-index: 28; /* Detrás del jugador, delante del mundo */
+    z-index: 28;
     opacity: 0;
     transform: scale(0);
     transition: all 1.5s cubic-bezier(0.25, 1, 0.5, 1);
@@ -443,7 +447,7 @@
     <div id="player"></div>
 
     <div class="instructions" id="game-hints">
-      Toca los lados para avanzar.<br>¡Desliza rápido para acelerar!
+      Mantén presionado para acelerar.<br>¡Desliza a los lados!
     </div>
   </div>
 
@@ -454,7 +458,6 @@
   let progress = 0;
   let speed = 0;
   
-  // Modificados: Mayor velocidad máxima y velocidad media para toques sostenidos
   let maxSpeed = 35; 
   let mediumSpeed = 12; 
   
@@ -545,13 +548,17 @@
     isRunning = false;
     cancelAnimationFrame(gameLoopReq);
     
+    // CORRECCIÓN: Volver al tema crema para evitar franjas azules
+    document.getElementById('theme-meta').setAttribute('content', '#FFF8EC');
+    document.body.style.backgroundColor = 'var(--ui-bg)';
+    
     // Limpiar efectos de victoria
     document.querySelectorAll('.confetti').forEach(el => el.remove());
     document.getElementById('win-glow').classList.remove('active');
     document.getElementById('game-header').style.opacity = '1';
     
     const player = document.getElementById('player');
-    player.style.transition = ''; // Resetear transición
+    player.style.transition = ''; 
     
     document.getElementById('game-screen').classList.remove('active');
     document.getElementById('home-screen').classList.add('active');
@@ -727,6 +734,10 @@
 
     player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
+    // CORRECCIÓN: Actualiza el color del sistema al color del cielo del nivel
+    document.getElementById('theme-meta').setAttribute('content', cfg.skyTop);
+    document.body.style.backgroundColor = cfg.skyTop;
+
     terrainSeeds = {
       a1: 40 + Math.random() * 40, f1: 500 + Math.random() * 500,
       a2: 25 + Math.random() * 25, f2: 250 + Math.random() * 200,
@@ -818,7 +829,6 @@
     let targetSpeed = 0;
     const screenCenter = window.innerWidth / 2;
 
-    // Aceleración aumentada y reactiva al toque sostenido
     if (isTouching) {
       targetSpeed = (touchX > screenCenter) ? mediumSpeed : -mediumSpeed;
       if (targetSpeed > 0 && speed < targetSpeed) speed += 1.2; 
@@ -840,7 +850,6 @@
     progress += speed * 0.005; 
     if (progress < 0) progress = 0; 
     
-    // Si completamos la carrera, lanzamos el triunfo y terminamos este frame de actualización visual
     if (progress >= 100) {
       progress = 100;
       document.getElementById('progress-fill').style.width = '100%';
@@ -1000,30 +1009,25 @@
     gameLoopReq = requestAnimationFrame(gameLoop);
   }
 
-  // --- NUEVA SECUENCIA DE TRIUNFO ---
+  // --- SECUENCIA DE TRIUNFO ---
   function winGame() {
-    isRunning = false; // Detiene la física del juego
+    isRunning = false; 
     document.getElementById('game-hints').style.opacity = '0';
-    document.getElementById('game-header').style.opacity = '0'; // Oculta UI
+    document.getElementById('game-header').style.opacity = '0'; 
 
     const player = document.getElementById('player');
     const glow = document.getElementById('win-glow');
 
-    // 1. Animación del jugador al centro
     player.style.transition = 'all 1.5s cubic-bezier(0.25, 1, 0.5, 1)';
     player.style.bottom = '50%';
     player.style.transform = 'translateX(-50%) translateY(50%) scale(3.5) rotate(0deg)';
 
-    // 2. Destello brillante detrás
     glow.classList.add('active');
-
-    // 3. Lluvia de confeti
     spawnConfetti();
 
-    // 4. Esperar unos segundos y volver a inicio
     setTimeout(() => {
       goHome();
-    }, 4500); // 4.5 segundos de celebración
+    }, 4500); 
   }
 
   function spawnConfetti() {
