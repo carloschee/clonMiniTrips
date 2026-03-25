@@ -1,42 +1,22 @@
 [
   {
-  "avion": {
-    "nombre": "Avión",
-    "imagen": "sprites/avion.png",
-    "tipo": "aire",
-    "colorCielo": "#87CEEB",
-    "colorFondo": "#a8e6cf",
-    "marcadores": "🪧",
-    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
-  },
-  "tren": {
-    "nombre": "Tren",
-    "imagen": "sprites/tren.png",
-    "tipo": "tierra",
-    "colorCielo": "#87CEEB",
-    "colorFondo": "#a8e6cf",
-    "marcadores": "🪧",
-    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
-  },
-  "barco": {
-    "nombre": "Barco",
-    "imagen": "sprites/barco.png",
-    "tipo": "agua",
-    "colorCielo": "#E0F7FA",
-    "colorFondo": "#0288D1",
-    "marcadores": "🛟",
-    "elementos": ["🐟", "🐬", "🐙", "🏝️", "🦀", "🦆", "🐚", "🐳"]
-  },
-  "coche": {
-    "nombre": "Coche",
-    "imagen": "sprites/coche.png",
-    "tipo": "tierra",
-    "colorCielo": "#87CEEB",
-    "colorFondo": "#a8e6cf",
-    "marcadores": "🪧",
-    "elementos": ["🐄", "🌳", "🌲", "🐑", "🌻", "🍄", "🏕️", "🐦"]
+    "avion": {
+      "nombre": "Avión",
+      "imagen": "sprites/avion.png"
+    },
+    "tren": {
+      "nombre": "Tren",
+      "imagen": "sprites/tren.png"
+    },
+    "barco": {
+      "nombre": "Barco",
+      "imagen": "sprites/barco.png"
+    },
+    "coche": {
+      "nombre": "Coche",
+      "imagen": "sprites/coche.png"
+    }
   }
-}
 ]
 
 
