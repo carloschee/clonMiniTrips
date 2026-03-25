@@ -1,1060 +1,1042 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#87CEEB">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Viajes Divertidos - Mini Clon</title>
-    <style>
-        /*
-         * ==========================================================================
-         * SECCIÓN 1: HOJA DE ESTILOS (CSS)
-         * Define los colores, diseño interactivo y animaciones de la interfaz.
-         * ==========================================================================
-         */
-        :root {
-            /* Variables de color para mantener consistencia en todo el diseño */
-            --primary: #FF6B6B;
-            --secondary: #4ECDC4;
-            --bg: #F7FFF7;
-            --text: #2C3E50;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Trips!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none; /* Previene el comportamiento nativo táctil (como el scroll) al interactuar con el juego */
-        }
+  :root {
+    --sky-top: #87CEEB;
+    --sky-bottom: #B8E4F9;
+    --ground: #6BBF4E;
+    --ground-dark: #4E9B35;
+    --water: #3A9FD8;
+    --water-dark: #2278A8;
+    --sand: #F5D77A;
+    --cloud: #FFFFFF;
+    --sun: #FFD93D;
+    --star: #FFE566;
+    --ui-bg: #FFF8EC;
+    --ui-shadow: rgba(0,0,0,0.18);
+    --btn-green: #5DD15A;
+    --btn-green-dark: #3FAD3C;
+    --btn-orange: #FF8A3D;
+    --btn-orange-dark: #E06820;
+    --btn-blue: #4FC3F7;
+    --btn-blue-dark: #0288D1;
+    --text-dark: #2C2C54;
+    --marker-color: #FF5252;
+  }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none; /* Previene el scroll en móviles al jugar */
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #1a1a2e;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; overflow: hidden;
+  }
 
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+  #app {
+    width: 800px; height: 500px;
+    position: relative; overflow: hidden;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
 
-        /* Capas de Interfaz */
-        .ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Permite clicks a través de la interfaz transparente */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+  /* ========== SCREENS ========== */
+  .screen {
+    position: absolute; inset: 0;
+    display: none; overflow: hidden;
+  }
+  .screen.active { display: block; }
 
-        .active-ui {
-            pointer-events: auto;
-        }
+  /* ========== HOME SCREEN ========== */
+  #home-screen {
+    background: linear-gradient(160deg, #FFE066 0%, #FF8A3D 40%, #FF4F8B 100%);
+  }
 
-        .hidden {
-            display: none !important;
-        }
+  .home-clouds {
+    position: absolute; top: 0; left: 0; width: 200%; height: 100%;
+    animation: cloudScroll 30s linear infinite;
+  }
+  @keyframes cloudScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
 
-        /* Menú Principal */
-        #main-menu {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        }
+  .home-title {
+    position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 52px; color: white;
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.15);
+    white-space: nowrap; letter-spacing: 2px;
+    animation: titleBounce 2s ease-in-out infinite;
+  }
+  @keyframes titleBounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-6px); }
+  }
 
-        .title {
-            font-size: 3rem;
-            color: var(--text);
-            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
-            margin-bottom: 2rem;
-            text-align: center;
-            animation: bounce 2s infinite ease-in-out;
-        }
+  .home-subtitle {
+    position: absolute; top: 94px; left: 50%; transform: translateX(-50%);
+    font-size: 16px; color: rgba(255,255,255,0.9); font-weight: 700;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.15); white-space: nowrap; letter-spacing: 1px;
+  }
 
-        .grid-vehiculos {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            padding: 20px;
-            max-width: 600px;
-            width: 100%;
-        }
+  .vehicles-grid {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 16px; align-items: flex-end;
+  }
 
-        .btn-vehiculo {
-            background: white;
-            border: 4px solid var(--secondary);
-            border-radius: 20px;
-            padding: 20px;
-            font-size: 4rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+  .vehicle-card {
+    width: 150px; height: 160px; border-radius: 24px;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 2px 0 rgba(255,255,255,0.5) inset;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform .2s, box-shadow .2s;
+    border: 3px solid rgba(255,255,255,0.8);
+    position: relative; overflow: hidden;
+    animation: cardFloat 3s ease-in-out infinite;
+  }
+  .vehicle-card:nth-child(1) { animation-delay: 0s; }
+  .vehicle-card:nth-child(2) { animation-delay: 0.4s; }
+  .vehicle-card:nth-child(3) { animation-delay: 0.8s; }
+  .vehicle-card:nth-child(4) { animation-delay: 1.2s; }
 
-        .btn-vehiculo span {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--text);
-            margin-top: 10px;
-        }
+  @keyframes cardFloat {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  .vehicle-card:hover { transform: translateY(-12px) scale(1.05); box-shadow: 0 16px 40px rgba(0,0,0,0.3); }
+  .vehicle-card:active { transform: scale(0.96); }
 
-        .btn-vehiculo:hover {
-            transform: scale(1.05) translateY(-5px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.2);
-        }
+  .vehicle-card .card-emoji {
+    font-size: 52px; margin-bottom: 4px;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+    transition: transform .2s;
+  }
+  .vehicle-card:hover .card-emoji { transform: scale(1.15) rotate(-5deg); }
 
-        /* UI del Juego */
-        #game-ui {
-            justify-content: flex-start;
-            padding: 20px;
-        }
+  .vehicle-card .card-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 18px; color: var(--text-dark);
+    text-align: center;
+  }
 
-        .top-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: auto;
-        }
+  .card-stripe {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
+  }
+  .plane-card .card-stripe { background: linear-gradient(90deg, #4FC3F7, #0288D1); }
+  .train-card .card-stripe { background: linear-gradient(90deg, #FF8A3D, #E06820); }
+  .boat-card  .card-stripe { background: linear-gradient(90deg, #4DD0E1, #0097A7); }
+  .car-card   .card-stripe { background: linear-gradient(90deg, #5DD15A, #3FAD3C); }
 
-        .btn-volver {
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            font-weight: bold;
-        }
+  /* ========== GAME SCREEN ========== */
+  #game-screen { background: #87CEEB; }
 
-        .progress-container {
-            flex-grow: 1;
-            margin: 0 20px;
-            height: 20px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 10px;
-            border: 2px solid white;
-            overflow: hidden;
-            position: relative;
-        }
+  /* ---- scrolling world ---- */
+  #world {
+    position: absolute; inset: 0;
+    overflow: hidden;
+  }
 
-        .progress-bar {
-            height: 100%;
-            background: var(--secondary);
-            width: 0%;
-            transition: width 0.1s linear;
-        }
+  #world-canvas {
+    position: absolute; top: 0; left: 0;
+    image-rendering: pixelated;
+  }
 
-        .instrucciones {
-            position: absolute;
-            bottom: 30px;
-            background: rgba(255,255,255,0.8);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            color: var(--text);
-            pointer-events: none;
-            animation: fadeout 5s forwards;
-            animation-delay: 3s;
-        }
+  /* ---- vehicle sprite ---- */
+  #vehicle-sprite {
+    position: absolute; font-size: 56px;
+    filter: drop-shadow(4px 6px 8px rgba(0,0,0,0.3));
+    transition: top .4s ease;
+    z-index: 10;
+    transform-origin: center;
+  }
 
-        /* Pantalla de Victoria */
-        #victory-screen {
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 10;
-        }
+  /* ---- HUD ---- */
+  #hud {
+    position: absolute; top: 12px; left: 12px; right: 12px;
+    display: flex; align-items: center; gap: 10px; z-index: 20;
+  }
 
-        .btn-jugar-de-nuevo {
-            background: var(--secondary);
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+  #back-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.92); border: none; cursor: pointer;
+    font-size: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .15s;
+  }
+  #back-btn:hover { transform: scale(1.1); }
+  #back-btn:active { transform: scale(0.9); }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
+  #progress-bar-container {
+    flex: 1; height: 20px; background: rgba(255,255,255,0.5);
+    border-radius: 10px; overflow: visible;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+    position: relative;
+  }
+  #progress-bar {
+    height: 100%; border-radius: 10px;
+    background: linear-gradient(90deg, #FFD93D, #FF8A3D);
+    transition: width .5s ease;
+    box-shadow: 0 2px 6px rgba(255,140,0,0.4);
+  }
 
-        @keyframes fadeout {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-    </style>
+  .milestone-dot {
+    position: absolute; top: 50%; width: 14px; height: 14px;
+    border-radius: 50%; background: white;
+    border: 3px solid #FF8A3D;
+    transform: translate(-50%, -50%);
+    font-size: 0; transition: background .3s, transform .3s;
+    z-index: 2;
+  }
+  .milestone-dot.passed { background: #FFD93D; transform: translate(-50%, -50%) scale(1.2); }
+
+  #countdown-badge {
+    min-width: 48px; height: 44px; border-radius: 22px;
+    background: rgba(255,255,255,0.95);
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px; color: var(--text-dark);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2); padding: 0 10px;
+    transition: transform .2s;
+  }
+  #countdown-badge.pop {
+    animation: popBadge .4s ease;
+  }
+  @keyframes popBadge {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+
+  /* ---- tap button ---- */
+  #tap-btn {
+    position: absolute; bottom: 20px; right: 24px;
+    width: 90px; height: 90px; border-radius: 50%;
+    border: none; cursor: pointer; z-index: 20;
+    font-size: 36px;
+    background: radial-gradient(circle at 35% 35%, #FFD93D, #FF8A3D);
+    box-shadow: 0 6px 0 #C05A00, 0 8px 20px rgba(0,0,0,0.3);
+    transition: transform .1s, box-shadow .1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #tap-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #C05A00, 0 4px 10px rgba(0,0,0,0.2); }
+
+  #tap-label {
+    position: absolute; bottom: 118px; right: 24px;
+    font-family: 'Fredoka One', cursive; font-size: 13px;
+    color: white; text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+    z-index: 20; text-align: center; width: 90px;
+  }
+
+  /* ---- interactive elements ---- */
+  .world-object {
+    position: absolute; font-size: 32px; cursor: pointer;
+    z-index: 8; transition: transform .15s;
+    filter: drop-shadow(2px 3px 4px rgba(0,0,0,0.2));
+  }
+  .world-object:hover { transform: scale(1.2); }
+  .world-object.bounce { animation: objBounce .4s ease; }
+  @keyframes objBounce {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.4) rotate(10deg); }
+  }
+
+  .sparkle {
+    position: absolute; pointer-events: none; z-index: 30;
+    font-size: 22px; animation: sparkleAnim .7s ease forwards;
+  }
+  @keyframes sparkleAnim {
+    0%   { transform: scale(0) translateY(0); opacity: 1; }
+    60%  { transform: scale(1.3) translateY(-30px); opacity: 1; }
+    100% { transform: scale(0.5) translateY(-60px); opacity: 0; }
+  }
+
+  /* ---- arrival / win ---- */
+  #win-screen {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 50; backdrop-filter: blur(4px);
+  }
+  #win-screen.visible { display: flex; }
+
+  .win-card {
+    background: #FFF8EC; border-radius: 32px;
+    padding: 36px 48px; text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    animation: winPop .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes winPop {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  .win-emoji { font-size: 72px; display: block; animation: winSpin 1s ease; }
+  @keyframes winSpin {
+    from { transform: rotate(-20deg) scale(0.5); }
+    to   { transform: rotate(0deg) scale(1); }
+  }
+  .win-title {
+    font-family: 'Fredoka One', cursive; font-size: 36px; color: var(--text-dark);
+    margin: 10px 0 4px;
+  }
+  .win-sub { font-size: 15px; color: #888; margin-bottom: 20px; }
+  .win-btn {
+    padding: 14px 32px; border-radius: 40px; border: none; cursor: pointer;
+    font-family: 'Fredoka One', cursive; font-size: 20px; color: white;
+    background: linear-gradient(135deg, #5DD15A, #3FAD3C);
+    box-shadow: 0 5px 0 #2A8028; transition: transform .1s;
+    margin: 0 8px;
+  }
+  .win-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2A8028; }
+  .win-btn.orange { background: linear-gradient(135deg, #FF8A3D, #E06820); box-shadow: 0 5px 0 #A04010; }
+
+  /* floating score stars */
+  .score-star {
+    position: absolute; font-size: 28px; pointer-events: none; z-index: 100;
+    animation: starFloat 1.5s ease forwards;
+  }
+  @keyframes starFloat {
+    0%   { transform: translateY(0) scale(0); opacity: 1; }
+    40%  { transform: translateY(-60px) scale(1.4); opacity: 1; }
+    100% { transform: translateY(-120px) scale(0.8); opacity: 0; }
+  }
+
+  /* ---- milestone popup ---- */
+  #milestone-popup {
+    position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+    font-family: 'Fredoka One', cursive; font-size: 48px; color: white;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+    z-index: 30; pointer-events: none; opacity: 0;
+    transition: opacity .2s;
+  }
+  #milestone-popup.show {
+    animation: milestonePop .8s ease forwards;
+  }
+  @keyframes milestonePop {
+    0%   { transform: translateX(-50%) scale(0.5); opacity: 0; }
+    30%  { transform: translateX(-50%) scale(1.2); opacity: 1; }
+    70%  { transform: translateX(-50%) scale(1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(0.9) translateY(-20px); opacity: 0; }
+  }
+
+  /* ---- particle system ---- */
+  .particle {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 35;
+    animation: particleFall 1s ease forwards;
+  }
+  @keyframes particleFall {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(80px) scale(0); opacity: 0; }
+  }
+</style>
 </head>
 <body>
 
-    <!--
-      ==========================================================================
-      SECCIÓN 2: ESTRUCTURA DE LA INTERFAZ (HTML)
-      Aquí se definen las "capas" visuales del juego. El canvas es el fondo
-      donde ocurre la acción, y los <div> son pantallas que se muestran u
-      ocultan según el estado del juego (Menú, Jugando, Victoria).
-      ==========================================================================
-    -->
+<div id="app">
 
-    <!-- Canvas: El lienzo de dibujo de HTML5 donde se renderizan los gráficos 2D del juego -->
-    <canvas id="gameCanvas"></canvas>
+  <!-- ======== HOME SCREEN ======== -->
+  <div id="home-screen" class="screen active">
+    <canvas id="home-canvas" width="800" height="500"></canvas>
+    <div class="home-title">✈ Mini Trips! 🚂</div>
+    <div class="home-subtitle">¿A dónde vamos hoy?</div>
+    <div class="vehicles-grid" id="vehicles-grid">
+      <!-- cards injected by JS -->
+    </div>
+  </div>
 
-    <!-- Menú Principal: Pantalla inicial para seleccionar vehículo -->
-    <div id="main-menu" class="ui-layer active-ui">
-        <h1 class="title">Viajes Divertidos</h1>
-        <div class="grid-vehiculos" id="grid-vehiculos">
-            <p style="grid-column: span 2; text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--text);">Cargando vehículos...</p>
-        </div>
+  <!-- ======== GAME SCREEN ======== -->
+  <div id="game-screen" class="screen">
+    <div id="world">
+      <canvas id="world-canvas" width="2400" height="500"></canvas>
+      <!-- world objects injected here -->
     </div>
 
-    <!-- UI en Juego -->
-    <div id="game-ui" class="ui-layer hidden">
-        <div class="top-bar">
-            <button class="btn-volver" onclick="volverAlMenu()">🏠</button>
-            <div class="progress-container">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-            <div style="width: 50px;"></div> <!-- Espaciador -->
-        </div>
-        <div class="instrucciones">Mantén presionado para avanzar. ¡Toca los objetos!</div>
+    <div id="vehicle-sprite">✈️</div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <button id="back-btn">🏠</button>
+      <div id="progress-bar-container">
+        <div id="progress-bar" style="width:0%"></div>
+      </div>
+      <div id="countdown-badge">10</div>
     </div>
 
-    <!-- Pantalla de Victoria -->
-    <div id="victory-screen" class="ui-layer hidden">
-        <h1 class="title" style="font-size: 4rem;">¡Llegaste! 🎉</h1>
-        <div id="victory-stars" style="font-size: 3rem; margin: 10px;">⭐ ⭐ ⭐</div>
-        <button class="btn-jugar-de-nuevo" onclick="volverAlMenu()">Jugar de nuevo</button>
+    <div id="tap-label">¡Toca!</div>
+    <button id="tap-btn">⭐</button>
+
+    <div id="milestone-popup"></div>
+    <div id="win-screen">
+      <div class="win-card">
+        <span class="win-emoji" id="win-emoji">🏆</span>
+        <div class="win-title" id="win-title">¡Llegaste!</div>
+        <div class="win-sub" id="win-sub">¡Excelente viaje!</div>
+        <button class="win-btn orange" onclick="Game.restart()">🔄 De nuevo</button>
+        <button class="win-btn" onclick="Game.goHome()">🏠 Inicio</button>
+      </div>
     </div>
+  </div>
+
+</div>
 
 <script>
-/**
- * ==========================================================================
- * SECCIÓN 3: MOTOR DEL JUEGO (JAVASCRIPT)
- * Este script maneja toda la lógica interactiva: físicas, dibujos, sonido,
- * entrada del usuario y la generación matemática/procedural de los niveles.
- * ==========================================================================
- */
+// ================================================================
+//  DATA — vehicles JSON  (as if loaded from external JSON file)
+// ================================================================
+const VEHICLES_JSON = [
+  {
+    "avion": { "nombre": "Avión",  "imagen": "sprites/avion.png"  },
+    "tren":  { "nombre": "Tren",   "imagen": "sprites/tren.png"   },
+    "barco": { "nombre": "Barco",  "imagen": "sprites/barco.png"  },
+    "coche": { "nombre": "Coche",  "imagen": "sprites/coche.png"  }
+  }
+];
 
-// Referencias directas al elemento Canvas y su API de dibujo
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d'); // Contexto 2D usado para trazar formas, caminos y texto
-
-// --- VARIABLES GLOBALES DE ESTADO ---
-// Definen en qué ciclo se encuentra la aplicación en este momento.
-let estadoJuego = 'MENU'; // Posibles estados: 'MENU', 'JUGANDO', 'VICTORIA'
-let vehiculoActual = null; // Guardará el set de reglas del vehículo elegido
-let animFrameId; // Guarda el ID del ciclo de animación (útil para detenerlo)
-let tiempoAnterior = 0; // Se usa para calcular cuánto tiempo ha pasado entre fotogramas
-
-// --- MUNDO VIRTUAL Y CÁMARA ---
-// El "mundo" de nuestro juego es mucho más amplio que la pantalla. 
-// La "cámara" actúa como un visor que dicta qué segmento de este mundo vemos.
-const LONGITUD_NIVEL = 15000; // Largo total de la ruta en coordenadas
-let camaraX = 0; // Desplazamiento horizontal de visualización
-let camaraY = 0; // Desplazamiento vertical de visualización
-let anchoMundo = LONGITUD_NIVEL;
-let nivelGenerado = []; // Lista (Array) de todos los objetos interactivos actuales
-let particulas = []; // Lista de efectos visuales temporales (estrellitas, gotas)
-let marcadores = []; // Lista de las banderas de control numeradas (del 10 al 1)
-
-// --- EL JUGADOR ---
-// Estructura de datos que rastrea al actor principal.
-let jugador = {
-    x: 0,
-    y: 0,
-    velocidadX: 0,
-    velocidadY: 0,
-    imagenObj: null, // Guardará el objeto de imagen cargado
-    tipo: 'tierra', // El tipo afecta el comportamiento de las físicas (flota, vuela o rueda)
-    rotacion: 0 // Inclinación visual del vehículo al escalar terrenos
+// Emoji fallback (since we have no real sprite files)
+const VEHICLE_META = {
+  avion: { emoji: '✈️', icon: '✈️', color: '#E3F2FD', stripe: '#4FC3F7', label: 'Avión' },
+  tren:  { emoji: '🚂', icon: '🚂', color: '#FFF3E0', stripe: '#FF8A3D', label: 'Tren'  },
+  barco: { emoji: '🚢', icon: '🚢', color: '#E0F7FA', stripe: '#4DD0E1', label: 'Barco' },
+  coche: { emoji: '🚗', icon: '🚗', color: '#E8F5E9', stripe: '#5DD15A', label: 'Coche' }
 };
 
-// --- ENTRADAS (INPUTS) ---
-// Registra si el usuario interactúa para saber si debemos aplicar fuerza/aceleración.
-let inputs = {
-    presionado: false,
-    x: 0, // Coordenada X del toque en pantalla
-    y: 0, // Coordenada Y del toque en pantalla
-    mitadDerecha: false // Determina si la intención es avanzar o retroceder
+// ================================================================
+//  LEVEL CONFIGS — procedural theme per vehicle
+// ================================================================
+const LEVEL_CONFIGS = {
+  avion: {
+    bgTop: '#87CEEB', bgBottom: '#B8E4F9',
+    groundColor: null, // sky level — no ground strip
+    groundY: null,
+    vehicleY: 200,
+    departureLabel: '✈ Aeropuerto',
+    arrivalLabel: '🏝 Destino',
+    departureEmoji: '🏗',
+    arrivalEmoji: '🌴',
+    cloudEmojis: ['☁️','⛅','🌤'],
+    bgObjects: [
+      { e:'☁️', freq: 0.5, yMin:40,  yMax:180 },
+      { e:'⛅', freq: 0.3, yMin:60,  yMax:160 },
+      { e:'🌤', freq: 0.2, yMin:30,  yMax:120 },
+      { e:'⭐', freq: 0.15,yMin:20,  yMax:80  },
+    ],
+    interactiveObjects: [
+      { e:'🎈', label:'¡Globo!',   stars:1 },
+      { e:'🦅', label:'¡Águila!',  stars:2 },
+      { e:'🎆', label:'¡Fuegos!',  stars:3 },
+      { e:'🌈', label:'¡Arcoíris!',stars:2 },
+      { e:'🛸', label:'¡OVNI!',    stars:3 },
+    ],
+    particleColors: ['#87CEEB','#B8E4F9','#FFFFFF','#FFD93D'],
+    winEmoji: '🏖️',
+    winTitle: '¡Aterrizaste!',
+    winSub: '¡Qué vuelo tan increíble!'
+  },
+  tren: {
+    bgTop: '#92D16B', bgBottom: '#C8ECA5',
+    groundColor: '#6BBF4E',
+    groundY: 340,
+    vehicleY: 280,
+    departureLabel: '🚉 Estación Inicio',
+    arrivalLabel: '🏔 Estación Final',
+    departureEmoji: '🚉',
+    arrivalEmoji: '🏔',
+    bgObjects: [
+      { e:'🌲', freq: 0.4, yMin:200, yMax:330 },
+      { e:'🌳', freq: 0.3, yMin:200, yMax:330 },
+      { e:'⛰',  freq: 0.2, yMin:100, yMax:260 },
+      { e:'🏠', freq: 0.15,yMin:230, yMax:310 },
+      { e:'🌾', freq: 0.2, yMin:290, yMax:330 },
+    ],
+    interactiveObjects: [
+      { e:'🐄', label:'¡Vaca!',   stars:1 },
+      { e:'🐑', label:'¡Oveja!',  stars:1 },
+      { e:'🦊', label:'¡Zorro!',  stars:2 },
+      { e:'🌻', label:'¡Girasol!',stars:1 },
+      { e:'🏡', label:'¡Casa!',   stars:2 },
+    ],
+    particleColors: ['#6BBF4E','#FFD93D','#FF8A3D','#FFFFFF'],
+    winEmoji: '🏔',
+    winTitle: '¡Llegó el tren!',
+    winSub: '¡Viaje en tren completado!'
+  },
+  barco: {
+    bgTop: '#87CEEB', bgBottom: '#B8E4F9',
+    groundColor: '#3A9FD8',
+    groundY: 300,
+    vehicleY: 270,
+    departureLabel: '⚓ Puerto',
+    arrivalLabel: '🏝 Isla Tesoro',
+    departureEmoji: '⚓',
+    arrivalEmoji: '🏝',
+    bgObjects: [
+      { e:'🌊', freq: 0.5, yMin:280, yMax:420 },
+      { e:'⛅', freq: 0.3, yMin:40,  yMax:140 },
+      { e:'☁️', freq: 0.3, yMin:40,  yMax:140 },
+      { e:'🐟', freq: 0.2, yMin:320, yMax:420 },
+      { e:'🦈', freq: 0.1, yMin:330, yMax:420 },
+    ],
+    interactiveObjects: [
+      { e:'🐬', label:'¡Delfín!',  stars:2 },
+      { e:'🐙', label:'¡Pulpo!',   stars:3 },
+      { e:'🦀', label:'¡Cangrejo!',stars:1 },
+      { e:'🐳', label:'¡Ballena!', stars:3 },
+      { e:'🦜', label:'¡Loro!',    stars:2 },
+    ],
+    particleColors: ['#3A9FD8','#B8E4F9','#FFFFFF','#4DD0E1'],
+    winEmoji: '🏝',
+    winTitle: '¡Llegaste a la isla!',
+    winSub: '¡Aventura marina completada!'
+  },
+  coche: {
+    bgTop: '#A8E6CF', bgBottom: '#DCEDC8',
+    groundColor: '#555',
+    groundY: 360,
+    vehicleY: 300,
+    departureLabel: '🏘 Ciudad',
+    arrivalLabel: '🎡 Parque',
+    departureEmoji: '🏘',
+    arrivalEmoji: '🎡',
+    bgObjects: [
+      { e:'🌳', freq: 0.3, yMin:220, yMax:340 },
+      { e:'🌵', freq: 0.2, yMin:230, yMax:340 },
+      { e:'⛰',  freq: 0.15,yMin:100, yMax:240 },
+      { e:'🏪', freq: 0.15,yMin:240, yMax:330 },
+      { e:'🚦', freq: 0.1, yMin:310, yMax:360 },
+    ],
+    interactiveObjects: [
+      { e:'🐕', label:'¡Perro!',    stars:1 },
+      { e:'🦋', label:'¡Mariposa!', stars:1 },
+      { e:'🍦', label:'¡Helado!',   stars:2 },
+      { e:'🎠', label:'¡Carrusel!', stars:3 },
+      { e:'🌺', label:'¡Flor!',     stars:1 },
+    ],
+    particleColors: ['#A8E6CF','#FFD93D','#FF4F8B','#FFFFFF'],
+    winEmoji: '🎡',
+    winTitle: '¡Llegaste al parque!',
+    winSub: '¡Fue un viaje divertido!'
+  }
 };
 
-/**
- * BASE DE DATOS DE VEHÍCULOS (CONFIGURACIÓN)
- * Ahora se cargará dinámicamente leyendo 'sprites.json'
- */
-let CONFIGURACION = {};
+// ================================================================
+//  HOME SCREEN CANVAS ANIMATION
+// ================================================================
+function initHomeCanvas() {
+  const canvas = document.getElementById('home-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 800; canvas.height = 500;
 
-// Separamos la lógica de las funciones generadoras de terreno porque 
-// el JSON no puede almacenar funciones matemáticas directamente.
-const GENERADORES_TERRENO = {
-    tierra: (x) => Math.sin(x / 300) * 40 + Math.sin(x / 800) * 60 + canvas.height * 0.7,
-    agua: (x, tiempo) => Math.sin(x / 150 + tiempo * 2) * 15 + Math.sin(x / 400 + tiempo) * 20 + canvas.height * 0.65,
-    via: (x) => Math.sin(x / 600) * 30 + canvas.height * 0.75,
-    aire: (x) => canvas.height * 0.9 // Suelo muy bajo, vuela libre
-};
+  const clouds = Array.from({length: 6}, () => ({
+    x: Math.random() * 800,
+    y: 20 + Math.random() * 120,
+    size: 40 + Math.random() * 40,
+    speed: 0.3 + Math.random() * 0.4
+  }));
 
-/**
- * CARGA DE DATOS (FETCH JSON)
- * Lee el archivo sprites.json, arma la configuración y precarga las imágenes de los vehículos.
- */
-async function cargarVehiculos() {
-    try {
-        const respuesta = await fetch('sprites.json');
-        if (!respuesta.ok) throw new Error('No se pudo cargar sprites.json');
-        
-        const datos = await respuesta.json();
-        CONFIGURACION = datos;
-
-        const gridVehiculos = document.getElementById('grid-vehiculos');
-        gridVehiculos.innerHTML = ''; // Limpiar mensaje de "Cargando..."
-
-        // Iterar sobre cada vehículo definido en el JSON
-        for (const [clave, config] of Object.entries(CONFIGURACION)) {
-            // Asignar el generador de terreno correspondiente al tipo ("tierra", "agua", etc.)
-            config.generarTerreno = GENERADORES_TERRENO[config.tipo] || GENERADORES_TERRENO.tierra;
-
-            // Pre-cargar la imagen del sprite desde la carpeta 'sprites'
-            const img = new Image();
-            img.src = `sprites/${config.imagen}`; 
-            config.imagenObj = img;
-
-            // Crear el botón para el menú dinámicamente
-            const btn = document.createElement('button');
-            btn.className = 'btn-vehiculo';
-            btn.onclick = () => iniciarJuego(clave);
-            
-            // Imagen dentro del botón
-            const imgHtml = document.createElement('img');
-            imgHtml.src = img.src;
-            imgHtml.style.width = '80px'; 
-            imgHtml.style.height = '80px';
-            imgHtml.style.objectFit = 'contain';
-
-            // Etiqueta de texto (Usa 'nombre' del JSON o capitaliza la clave)
-            const span = document.createElement('span');
-            span.textContent = config.nombre || (clave.charAt(0).toUpperCase() + clave.slice(1));
-
-            btn.appendChild(imgHtml);
-            btn.appendChild(span);
-            gridVehiculos.appendChild(btn);
-        }
-
-    } catch (error) {
-        console.error("Error al iniciar los vehículos:", error);
-        document.getElementById('grid-vehiculos').innerHTML = 
-            '<p style="grid-column: span 2; text-align: center; color: var(--primary);">⚠️ No se encontró sprites.json. Asegúrate de estar corriendo un servidor web local.</p>';
-    }
-}
-
-// Iniciar la carga justo al iniciar el script
-cargarVehiculos();
-
-/**
- * ==========================================================================
- * SISTEMA DE SONIDO SINTETIZADO (Web Audio API)
- * Genera efectos de sonido mediante ondas matemáticas (osciladores) en lugar
- * de cargar archivos de audio estáticos (mp3/wav). Esto hace a la PWA muy ligera.
- * ==========================================================================
- */
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
-
-// Inicializa el sistema de audio. Por medidas de seguridad, los navegadores
-// modernos requieren que el audio despierte SOLO después del primer toque del usuario.
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-}
-
-// Crea bips y fanfarrias usando tonos procedimentales.
-function reproducirSonido(tipo) {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    const ahora = audioCtx.currentTime;
-    
-    if (tipo === 'interactuar') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, ahora);
-        osc.frequency.exponentialRampToValueAtTime(800, ahora + 0.1);
-        gain.gain.setValueAtTime(0.3, ahora);
-        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.1);
-        osc.start(ahora);
-        osc.stop(ahora + 0.1);
-    } else if (tipo === 'meta') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, ahora); // A4
-        osc.frequency.setValueAtTime(554, ahora + 0.2); // C#5
-        osc.frequency.setValueAtTime(659, ahora + 0.4); // E5
-        osc.frequency.setValueAtTime(880, ahora + 0.6); // A5
-        gain.gain.setValueAtTime(0.3, ahora);
-        gain.gain.linearRampToValueAtTime(0, ahora + 1.0);
-        osc.start(ahora);
-        osc.stop(ahora + 1.0);
-    }
-}
-
-/**
- * ==========================================================================
- * MANEJO DE CONTROLES (Eventos de Navegador)
- * Detecta toques táctiles móviles (Touch) y clics de escritorio (Mouse) en la pantalla.
- * ==========================================================================
- */
-
-// Garantiza que el lienzo abarque toda la ventana en cualquier momento
-function redimensionarCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', redimensionarCanvas);
-redimensionarCanvas(); // Ejecución inicial
-
-// Se lanza en cuanto el usuario baja el dedo o da clic
-function manejarInicioEntrada(e) {
-    if (estadoJuego !== 'JUGANDO') return;
-    initAudio(); // Reactivar audio (política navegador)
-    inputs.presionado = true;
-    
-    // Unificar sistema Touch y Mouse leyendo siempre las coordenadas exactas X/Y
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    
-    inputs.x = clientX;
-    inputs.y = clientY;
-    inputs.mitadDerecha = clientX > window.innerWidth / 2;
-
-    // Detectar Interacciones Táctiles:
-    // Convertimos la posición del toque en la pantalla local a la posición real dentro
-    // del vasto mundo virtual sumándole la posición actual de la cámara.
-    const mundoX = clientX + camaraX;
-    const mundoY = clientY + camaraY;
-    
-    let interactuo = false;
-    for (let el of nivelGenerado) {
-        // Distancia euclidiana (Teorema de Pitágoras) para una colisión circular (hitbox)
-        const dist = Math.hypot(el.x - mundoX, el.y - mundoY);
-        // Radio de 80px: Es deliberadamente amplio para ser tolerante con niños pequeños
-        if (dist < 80) {
-            el.interactuar();
-            interactuo = true;
-            break; // Salir para interactuar con solo 1 elemento a la vez
-        }
-    }
-    
-    // (Si no se tocó ningún objeto del mapa, el motor de físicas leerá 'inputs.presionado = true' para acelerar)
-}
-
-// Se ejecuta al levantar el dedo o soltar el clic
-function manejarFinEntrada(e) {
-    inputs.presionado = false;
-}
-
-// Se actualiza continuamente mientras el dedo/puntero se arrastra
-function manejarMovimientoEntrada(e) {
-    if (!inputs.presionado) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    inputs.x = clientX;
-    inputs.y = clientY;
-    inputs.mitadDerecha = clientX > window.innerWidth / 2;
-}
-
-// Listeners
-canvas.addEventListener('mousedown', manejarInicioEntrada);
-window.addEventListener('mouseup', manejarFinEntrada);
-canvas.addEventListener('mousemove', manejarMovimientoEntrada);
-canvas.addEventListener('touchstart', manejarInicioEntrada, {passive: false});
-window.addEventListener('touchend', manejarFinEntrada);
-canvas.addEventListener('touchmove', manejarMovimientoEntrada, {passive: false});
-
-/**
- * ==========================================================================
- * LÓGICA DE TRANSICIONES Y MENÚS
- * Controla el inicio de los viajes, el reinicio de los mismos y la meta final.
- * ==========================================================================
- */
-
-// Transición del menú principal hacia la fase jugable
-function iniciarJuego(tipoVehiculo) {
-    initAudio();
-    vehiculoActual = CONFIGURACION[tipoVehiculo]; // Cargar set de reglas
-    
-    // Resetear al jugador a los valores de fábrica para un nuevo viaje
-    jugador.imagenObj = vehiculoActual.imagenObj; // Pasar la imagen pre-cargada
-    jugador.tipo = vehiculoActual.tipo;
-    jugador.x = 200; // Posición de salida inicial
-    jugador.y = canvas.height / 2;
-    jugador.velocidadX = 0;
-    jugador.velocidadY = 0;
-    
-    // Regresar cámara al origen
-    camaraX = 0;
-    camaraY = 0;
-    tiempoAnterior = performance.now();
-    
-    generarNivel(); // Instanciar obstáculos y terreno
-    
-    // Transición UI: Apagar pantallas inactivas encendiendo las activas (modificando CSS)
-    document.getElementById('main-menu').classList.add('hidden');
-    document.getElementById('victory-screen').classList.add('hidden');
-    document.getElementById('game-ui').classList.remove('hidden');
-    
-    estadoJuego = 'JUGANDO';
-    
-    // Iniciar el corazón del juego si estaba pausado
-    if (animFrameId) cancelAnimationFrame(animFrameId);
-    buclePrincipal(tiempoAnterior);
-}
-
-// Transición de regreso para elegir un viaje nuevo
-function volverAlMenu() {
-    estadoJuego = 'MENU';
-    if (animFrameId) cancelAnimationFrame(animFrameId);
-    
-    document.getElementById('game-ui').classList.add('hidden');
-    document.getElementById('victory-screen').classList.add('hidden');
-    document.getElementById('main-menu').classList.remove('hidden');
-}
-
-// Secuencia final una vez que el jugador cruza la meta
-function mostrarVictoria() {
-    estadoJuego = 'VICTORIA';
-    reproducirSonido('meta');
-    
-    // Ciclo visual para generar "Lluvia de confeti" y destellos
-    for(let i=0; i<100; i++) {
-        crearParticula(jugador.x + Math.random()*200 - 100, jugador.y - Math.random()*200, ['🎉', '🎊', '⭐', '🎈'][Math.floor(Math.random()*4)]);
-    }
-
-    document.getElementById('game-ui').classList.add('hidden');
-    document.getElementById('victory-screen').classList.remove('hidden');
-}
-
-/**
- * ==========================================================================
- * GENERADOR DE MUNDOS PROCEDURALES
- * En lugar de usar un archivo de mapa estático, aquí se "construye" un
- * ecosistema de tamaño variable salpicando objetos a distancias predecibles.
- * ==========================================================================
- */
-
-// Plantilla (Clase) para los "actores" del mundo decorativo (vacas, pinos, señales...)
-class ElementoEntorno {
-    constructor(x, y, emoji, tipoVehiculo) {
-        this.x = x;
-        this.y = y;
-        this.yBase = y; // Posición ancla; útil para animaciones como saltos que deben volver al piso
-        this.emoji = emoji;
-        this.escala = 1.0 + Math.random() * 0.5; // Escalas únicas para no ver clones exactos
-        this.tiempoAnimacion = 0;
-        this.estadoAnimacion = 'reposo'; // Modos: 'reposo' (idle), 'saltando', 'girando'
-        this.tipoVehiculo = tipoVehiculo;
-    }
-
-    // Comportamiento al reaccionar al toque del usuario
-    interactuar() {
-        if (this.estadoAnimacion !== 'reposo') return; // Bloquear si ya está animándose
-        
-        reproducirSonido('interactuar');
-        
-        // Decidir animación aleatoriamente: 50% de probabilidad de saltar vs girar
-        const r = Math.random();
-        if (r < 0.5) {
-            this.estadoAnimacion = 'saltando';
-        } else {
-            this.estadoAnimacion = 'girando';
-        }
-        this.tiempoAnimacion = 0;
-        
-        // Efectos extra (sparkles), personalizados si es una nube o pez
-        crearParticula(this.x, this.y - 40, '✨');
-        if (this.emoji === '☁️') crearParticula(this.x, this.y, '💨');
-        if (this.emoji === '🐟') crearParticula(this.x, this.y, '💧');
-    }
-
-    // Calculo periódico que mueve el objeto localmente si está bajo los efectos de una acción
-    actualizar(dt) {
-        if (this.estadoAnimacion === 'saltando') {
-            this.tiempoAnimacion += dt;
-            const progreso = this.tiempoAnimacion / 0.5; // Duración hard-coded de 0.5 segundos
-            if (progreso >= 1) {
-                this.estadoAnimacion = 'reposo';
-                this.y = this.yBase;
-            } else {
-                // Generar curva parabólica matemática (senoide) del piso al aire y de regreso
-                this.y = this.yBase - Math.sin(progreso * Math.PI) * 100;
-            }
-        } else if (this.estadoAnimacion === 'girando') {
-            this.tiempoAnimacion += dt;
-            if (this.tiempoAnimacion > 1.0) { // Duración de giro: 1 seg
-                this.estadoAnimacion = 'reposo';
-            }
-        }
-    }
-
-    // Trasladar la posición de datos puros a un dibujo sobre el Canvas
-    dibujar(ctx) {
-        ctx.save();
-        ctx.translate(this.x - camaraX, this.y - camaraY);
-        
-        if (this.estadoAnimacion === 'girando') {
-            ctx.rotate(this.tiempoAnimacion * Math.PI * 2);
-        }
-        
-        // Si es un barco, los elementos flotan un poco
-        if (this.tipoVehiculo === 'agua' && this.estadoAnimacion === 'reposo') {
-            ctx.translate(0, Math.sin(performance.now() / 300 + this.x) * 5);
-        }
-
-        ctx.scale(this.escala, this.escala);
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.emoji, 0, 0);
-        ctx.restore();
-    }
-}
-
-// Creador e inyector del ecosistema entero. Llena el mundo de inicio a fin.
-function generarNivel() {
-    nivelGenerado = [];
-    marcadores = [];
-    particulas = [];
-    
-    // 1. Crear el punto de inicio (Meta o Bandera Inicial)
-    nivelGenerado.push(new ElementoEntorno(200, vehiculoActual.generarTerreno(200, 0) - 50, '🏁', jugador.tipo));
-
-    // 2. Dividir el trayecto largo en 10 "tramos" o secciones matemáticas
-    const distanciaPorSeccion = (LONGITUD_NIVEL - 2000) / 10;
-    
-    // Bucle regresivo: Pone los hitos que el usuario cuenta (De la señal 10 a la señal 1)
-    for (let i = 10; i >= 1; i--) {
-        const xMarcador = 1000 + (10 - i) * distanciaPorSeccion;
-        
-        // Evaluar altura del terreno en ese punto X en tiempo 0 para asentar el objeto encima
-        let yMarcador = vehiculoActual.generarTerreno(xMarcador, 0) - 60;
-        
-        // Modificador: Si volamos el avión, los puntos de control flotan en el cielo al azar
-        if (jugador.tipo === 'aire') yMarcador = canvas.height * 0.2 + Math.random() * (canvas.height * 0.5);
-        
-        marcadores.push({
-            x: xMarcador,
-            y: yMarcador,
-            numero: i,
-            emoji: vehiculoActual.marcadores,
-            pasado: false // Esta bandera (flag) indica si el jugador cruzó esta marca o no
-        });
-        
-        // 3. Rellenar este tramo (entre marcador y marcador) con follaje, edificios y criaturas
-        const numElementos = 5 + Math.floor(Math.random() * 5); // Ej: crea entre 5 y 9 objetos
-        for (let j = 0; j < numElementos; j++) {
-            // Posición X esparcida dentro de la sección
-            const xAleatoria = xMarcador + Math.random() * distanciaPorSeccion;
-            let yAleatoria = vehiculoActual.generarTerreno(xAleatoria, 0);
-            
-            // Variación vertical según la naturaleza del viaje
-            if (jugador.tipo === 'aire') {
-                yAleatoria = Math.random() * canvas.height * 0.8; // Cielo abierto
-            } else if (jugador.tipo === 'agua') {
-                yAleatoria += (Math.random() * 40 - 20); // Chapoteando (arriba/abajo leve) del nivel acuático
-            } else {
-                yAleatoria -= 30; // Posado estático y al ras de suelo sólido
-            }
-            
-            const emojiAleatorio = vehiculoActual.elementos[Math.floor(Math.random() * vehiculoActual.elementos.length)];
-            nivelGenerado.push(new ElementoEntorno(xAleatoria, yAleatoria, emojiAleatorio, jugador.tipo));
-        }
-    }
-
-    // 4. Crear la Meta final/El Castillo al horizonte de término
-    nivelGenerado.push(new ElementoEntorno(LONGITUD_NIVEL - 500, vehiculoActual.generarTerreno(LONGITUD_NIVEL - 500, 0) - 50, '🏰', jugador.tipo));
-}
-
-// Pequeño constructor rápido para inyectar destellos/humo y soltarlos al entorno
-function crearParticula(x, y, emoji) {
-    particulas.push({
-        x: x,
-        y: y,
-        vx: (Math.random() - 0.5) * 200, // Variación de rebote direccional horizontal
-        vy: (Math.random() - 1) * 200,   // Velocidad vertical (tiende siempre hacia arriba inicialmente)
-        vida: 1.0,
-        emoji: emoji
-    });
-}
-
-/**
- * ==========================================================================
- * MOTOR FÍSICO Y DE POSICIONAMIENTO
- * Realiza todos los cálculos que dan vida a los objetos móviles en base 
- * al paso del tiempo (Delta Time o 'dt').
- * ==========================================================================
- */
-function actualizarFisicas(dt) {
-    // 1. Control de movimiento horizontal general
-    const velocidadMaxima = 400; // Límite en píxeles por segundo
-    let aceleracionX = 0;
-
-    // Lógica principal de acelerador/freno
-    if (inputs.presionado) {
-        if (inputs.mitadDerecha) {
-            aceleracionX = 800; // Impulso tractor al avanzar
-        } else {
-            aceleracionX = -400; // Freno drástico / Retroceso
-        }
-    } else {
-        // Fricción suave: sin dedos, la inercia muere paulatinamente multiplicando < 1
-        jugador.velocidadX *= 0.95;
-    }
-
-    // Ecuación Clásica Cinemática: V = Velocidad + (Aceleración * DeltaTiempo)
-    jugador.velocidadX += aceleracionX * dt;
-    
-    // Sujetar la velocidad a los límites máximos por hardware
-    if (jugador.velocidadX > velocidadMaxima) jugador.velocidadX = velocidadMaxima;
-    if (jugador.velocidadX < -velocidadMaxima/2) jugador.velocidadX = -velocidadMaxima/2;
-
-    // Cortar el movimiento micral: detener el deslizamiento totalmente si es indetectable
-    if (Math.abs(jugador.velocidadX) < 10 && !inputs.presionado) jugador.velocidadX = 0;
-
-    // Cambiar la posición virtual X sumando el factor velocidad
-    jugador.x += jugador.velocidadX * dt;
-
-    // Barrera invisible de salida: Prevenir ir hacia atrás en el nivel antes del inicio
-    if (jugador.x < 100) {
-        jugador.x = 100;
-        jugador.velocidadX = 0;
-    }
-
-    // 2. Control de movimiento vertical dependiente del ecosistema de terreno
-    // Obtener un tick de tiempo global constante para mover las olas a ritmo de reloj natural
-    const tiempoMundo = performance.now() / 1000;
-    // Interceptar la posición futura/actual del terreno para adosar el jugador a ella
-    const terrenoY = vehiculoActual.generarTerreno(jugador.x, tiempoMundo);
-
-    if (jugador.tipo === 'aire') {
-        // En el aire, la altura la dicta directamente dónde pone el dedo el jugador
-        if (inputs.presionado) {
-            const objetivoY = inputs.y + camaraY;
-            // "Suavizado simple" (Lerp simple) para no hacer un teletransporte brusco de la nave
-            jugador.y += (objetivoY - jugador.y) * 5 * dt; 
-        }
-        // Choques: el cielo es el tope alto(50), el suelo matemático es el fondo
-        if (jugador.y < 50) jugador.y = 50;
-        if (jugador.y > terrenoY - 50) jugador.y = terrenoY - 50;
-        
-        // Inclinación dinámica de alerones al ir rápido o subir rápido
-        jugador.rotacion = jugador.velocidadX * 0.0005 + (inputs.presionado ? (inputs.y + camaraY - jugador.y)*0.002 : 0);
-
-    } else if (jugador.tipo === 'agua') {
-        // El barco descansa encima de la curva sinusoidal dinámica (La "ola")
-        jugador.y = terrenoY - 30; 
-        // Calcular pendiente evaluando la Y unos píxeles más adelante para la proa del barco
-        const terrenoFuturo = vehiculoActual.generarTerreno(jugador.x + 10, tiempoMundo);
-        // Math.atan2 extrae el vector ángulo y da cabeceo realista
-        jugador.rotacion = Math.atan2(terrenoFuturo - terrenoY, 10);
-        
-    } else {
-        // Auto y Tren: Suspensión rígida atada a la curva base
-        jugador.y = terrenoY - 40;
-        const terrenoFuturo = vehiculoActual.generarTerreno(jugador.x + 20, tiempoMundo);
-        jugador.rotacion = Math.atan2(terrenoFuturo - terrenoY, 20);
-        
-        // Pequeño efecto vibratorio (baches) al rodar muy deprisa
-        if (jugador.velocidadX > 50 && jugador.tipo === 'tierra') {
-            jugador.y += Math.sin(tiempoMundo * 20) * 3;
-        }
-    }
-
-    // 3. Sistema de Rastreo de Cámara
-    // Mantiene la vista centrada a una distancia asimétrica (vemos más mundo hacia la derecha que a la izquierda)
-    camaraX = jugador.x - canvas.width * 0.3; 
-    if (camaraX < 0) camaraX = 0; // Trabar lente izquierdo al comienzo
-    
-    // Centrado suavizado vertical en Y (Impide que los baches mareen al ojo del usuario)
-    const camaraObjetivoY = jugador.y - canvas.height / 2;
-    camaraY += (camaraObjetivoY - camaraY) * 2 * dt;
-
-    // 4. Actulizar Estados del Ecosistema
-    for (let el of nivelGenerado) {
-        // Optimización masiva (Culling): Solo las entidades cerca del rango visual ejecutan cálculo
-        if (el.x > camaraX - 200 && el.x < camaraX + canvas.width + 200) {
-            el.actualizar(dt);
-        }
-    }
-
-    // 5. Motor de Gravedad para Partículas (El confeti debe caer solo)
-    for (let i = particulas.length - 1; i >= 0; i--) {
-        let p = particulas[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vy += 500 * dt; // Fuerza gravitacional acumulativa constante
-        p.vida -= dt;     // Reloj de extinción
-        if (p.vida <= 0) {
-            particulas.splice(i, 1); // Destruir referencia virtual en memoria si expira
-        }
-    }
-
-    // 6. Progresión UI y Detección de Hitos
-    let progresoActual = (jugador.x / LONGITUD_NIVEL) * 100; // Porcentual %
-    if (progresoActual > 100) progresoActual = 100;
-    document.getElementById('progress-bar').style.width = `${progresoActual}%`;
-
-    // Interceptar choques visuales entre coche y cartel numérico
-    for (let m of marcadores) {
-        if (!m.pasado && jugador.x > m.x) {
-            m.pasado = true; // Sellar comprobación
-            crearParticula(m.x, m.y - 50, '✨');
-            reproducirSonido('interactuar');
-        }
-    }
-
-    // 7. Disparador de la Pantalla de Fin
-    if (jugador.x >= LONGITUD_NIVEL - 500 && estadoJuego === 'JUGANDO') {
-        mostrarVictoria();
-    }
-}
-
-/**
- * ==========================================================================
- * FLUJO DE RENDERIZADO (El Pintor Principal)
- * Recolecta todos los datos analíticos del paso de físicas y "Pinta" la
- * pantalla con píxeles mediante el HTML Canvas 2D API.
- * Su estructura funciona en estilo Pila / Z-Index (Fondo a Frente).
- * ==========================================================================
- */
-function dibujar(dt) {
-    // 1. Limpiar pantalla con rodillo gigante de pintura celestial
-    ctx.fillStyle = vehiculoActual.colorCielo;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const tiempoMundo = performance.now() / 1000;
-
-    // 2. Fondo Estacionario (Efecto Parallax / Ilusión óptica 3D)
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.font = '80px Arial';
-    // Coloca decorados gigantescos, pero su "x" viaja multiplicado * 0.2 (Súper lento)
-    for(let i=0; i<LONGITUD_NIVEL; i+=800) {
-        const parallaxX = (i - camaraX * 0.2);
-        
-        // Evita dibujar fuera de los linderos monitoreados de la ventana
-        if(parallaxX > -100 && parallaxX < canvas.width + 100) {
-            if(jugador.tipo === 'aire' || jugador.tipo === 'tierra') {
-                ctx.fillText('☁️', parallaxX, canvas.height * 0.2 + Math.sin(i)*50);
-            }
-            if(jugador.tipo === 'via') {
-                ctx.fillText('⛰️', parallaxX, canvas.height * 0.6 + Math.sin(i)*30);
-            }
-        }
-    }
-    ctx.restore();
-
-    // 3. Geometría Principal: Creando el trazado matemático del suelo/río interactivo
+  function drawCloud(cx, cy, r) {
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
     ctx.beginPath();
-    ctx.moveTo(0, canvas.height); // Abajo a la izquierda
-    
-    const inicioX = Math.floor(camaraX);
-    const finX = Math.floor(camaraX + canvas.width);
-    
-    // Punto de enganche de lectura izquierda
-    ctx.lineTo(0, vehiculoActual.generarTerreno(inicioX, tiempoMundo) - camaraY);
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.arc(cx+r*0.8, cy-r*0.3, r*0.7, 0, Math.PI*2);
+    ctx.arc(cx+r*1.6, cy, r*0.8, 0, Math.PI*2);
+    ctx.fill();
+  }
 
-    // Dibuja una línea que une los puntitos de la función cada 50 px de resolución
-    for (let x = inicioX; x <= finX; x += 50) {
-        const y = vehiculoActual.generarTerreno(x, tiempoMundo) - camaraY;
-        ctx.lineTo(x - camaraX, y); // Transforma punto X real a su equivalente en Pantalla Visual Restada
-    }
-    
-    // Cerrar bloque sólido inferior regresando al subsuelo
-    ctx.lineTo(canvas.width, vehiculoActual.generarTerreno(finX, tiempoMundo) - camaraY);
-    ctx.lineTo(canvas.width, canvas.height);
-    
-    ctx.fillStyle = vehiculoActual.colorFondo;
-    
-    // Renderizados específicos decorativos por bioma
-    if (jugador.tipo === 'agua') {
-        ctx.globalAlpha = 0.8; // Masa fluida y gelatinosa azul
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-        // Agrega línea luminiscente para la espuma del oleaje
-        ctx.strokeStyle = '#81D4FA';
-        ctx.lineWidth = 5;
-        ctx.stroke();
-    } else {
-        ctx.fill(); // Relleno de pasto opaco general
-        if (jugador.tipo === 'tierra') {
-            ctx.strokeStyle = '#81C784'; // Listón de borde de vía terrestre
-            ctx.lineWidth = 8;
-            ctx.stroke();
-        } else if (jugador.tipo === 'via') {
-            // Capa de los rieles metalizados
-            ctx.strokeStyle = '#5D4037';
-            ctx.lineWidth = 10;
-            ctx.stroke();
-            
-            // Subcapa iterativa de rieles (Banda durmiente transversal de madera)
-            ctx.strokeStyle = '#3E2723';
-            ctx.lineWidth = 3;
-            for (let x = inicioX; x <= finX; x += 60) {
-                const y = vehiculoActual.generarTerreno(x, tiempoMundo) - camaraY;
-                ctx.beginPath();
-                ctx.moveTo(x - camaraX, y - 10);
-                ctx.lineTo(x - camaraX, y + 10);
-                ctx.stroke();
-            }
-        }
-    }
+  function frame() {
+    ctx.clearRect(0, 0, 800, 500);
+    // Draw rolling hills
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath(); ctx.ellipse(200,480,300,140,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(600,490,350,160,0,0,Math.PI*2); ctx.fill();
 
-    // 4. Dibujar Follaje y Residentes (Aves, Peces, Pinos)
-    for (let el of nivelGenerado) {
-        if (el.x > camaraX - 100 && el.x < camaraX + canvas.width + 100) {
-            el.dibujar(ctx);
-        }
-    }
-
-    // 5. Dibujar Cartelería Urbana Intermedia (Números del 10 al 1)
-    for (let m of marcadores) {
-        if (m.x > camaraX - 100 && m.x < camaraX + canvas.width + 100) {
-            ctx.save();
-            ctx.translate(m.x - camaraX, m.y - camaraY);
-            
-            // Reflejar metamorfosis visual si el usuario superó la zona
-            if (m.pasado) {
-                ctx.scale(1.2, 1.2); // Expande tamaño
-                ctx.globalAlpha = 0.5; // Causa aspecto "fantasma" de fondo
-            } else {
-                // Si no se supera, balancear levemente provocativamente
-                ctx.translate(0, Math.sin(tiempoMundo * 3 + m.x) * 5);
-            }
-
-            // Pintura emoji del poste general
-            ctx.font = '60px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(m.emoji, 0, 0);
-            
-            // Pintura de tipografía sobre el objeto (Fuente remarcada legible)
-            ctx.font = 'bold 30px Arial';
-            ctx.fillStyle = 'white';
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 4;
-            ctx.strokeText(m.numero, 0, 5); // Remarque del borde fuente (Sombra perimetral)
-            ctx.fillText(m.numero, 0, 5); // Tinta blanca primaria
-            
-            ctx.restore();
-        }
-    }
-
-    // 6. El Piloto (Vehículo Principal de Renderizado Dinámico)
-    ctx.save();
-    // Centrar ancla de pluma visual en coordenadas lógicas calculadas
-    ctx.translate(jugador.x - camaraX, jugador.y - camaraY);
-    ctx.rotate(jugador.rotacion); // Aplicar ángulo de inclinación de la colina/ola
-    
-    // Aplicar pulso "respiratorio" constante independiente al motor de física
-    ctx.translate(0, Math.sin(tiempoMundo * 10) * 2);
-
-    // Inteligencia Visual: Si frena fuerte y se mueve hacia atrás, voltea el dibujo (Efecto espejo)
-    if (jugador.velocidadX < -10) {
-        ctx.scale(-1, 1);
-    }
-    
-    // Dibuja la imagen del vehículo cargada desde el JSON (si ya está cargada)
-    if (jugador.imagenObj && jugador.imagenObj.complete) {
-        const anchoVehiculo = 100; // Puedes ajustar el ancho en píxeles de tus sprites aquí
-        const altoVehiculo = 100;  // Puedes ajustar el alto en píxeles
-        
-        // La imagen se dibuja centrada retrocediendo la mitad de su tamaño
-        ctx.drawImage(jugador.imagenObj, -anchoVehiculo / 2, -altoVehiculo / 2, anchoVehiculo, altoVehiculo);
-    } else {
-        // Fallback visual si el JSON o la imagen fallaron
-        ctx.font = '70px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('❓', 0, 0); 
-    }
-    
-    ctx.restore();
-
-    // 7. Capa Frontal y de Interfaz Relativa (Confetis y brillos frente a todo)
-    for (let p of particulas) {
-        ctx.save();
-        ctx.translate(p.x - camaraX, p.y - camaraY);
-        ctx.globalAlpha = p.vida; // Difuminar con el delta time restado en físicas
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(p.emoji, 0, 0);
-        ctx.restore();
-    }
+    clouds.forEach(c => {
+      drawCloud(c.x, c.y, c.size);
+      c.x += c.speed;
+      if (c.x > 900) c.x = -120;
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
 }
 
-/**
- * ==========================================================================
- * CICLO DE MÁQUINA (EL CORAZÓN) / GAME LOOP PRINCIPAL
- * Todo juego corre con un motor que no descansa jamás mientras la partida
- * sigue activa. Intenta repetir este paso unas 60 veces por cada segundo.
- * ==========================================================================
- */
-function buclePrincipal(timestamp) {
-    if (estadoJuego !== 'JUGANDO') return; // Bloquear ejecución fantasma en los menús
-    
-    // Delta Time o 'dt': Transforma fotogramas a una escala de tiempo (segundos reales).
-    // Esto significa que si tu PC va lento, los cálculos crecen y el personaje viaja más 
-    // cantidad de píxeles compensando el tiempo estancado, ¡Evitando un juego en cámara lenta!
-    let dt = (timestamp - tiempoAnterior) / 1000;
-    
-    // Si cambiaste de pestaña a mirar Youtube, el navegador pudo pausar el bucle 30 segundos.
-    // Esto limitador corta el DT gigante para evitar que el auto salte de un pantallazo a la meta.
-    if (dt > 0.1) dt = 0.1; 
-    
-    tiempoAnterior = timestamp;
+// ================================================================
+//  BUILD HOME SCREEN CARDS
+// ================================================================
+function buildHomeScreen() {
+  const grid = document.getElementById('vehicles-grid');
+  const vehicleData = VEHICLES_JSON[0];
+  const keys = Object.keys(vehicleData);
 
-    actualizarFisicas(dt); // Analiza la Matemática oculta del nuevo fotograma
-    dibujar(dt);           // Dibuja un fotograma que refleje esa Matemática
-
-    // Se autovoca (Re-Loop) usando la función más pulida de los navegadores para animar a 60Hz.
-    animFrameId = requestAnimationFrame(buclePrincipal);
+  keys.forEach(key => {
+    const info = vehicleData[key];
+    const meta = VEHICLE_META[key];
+    const card = document.createElement('div');
+    card.className = `vehicle-card ${key}-card`;
+    card.innerHTML = `
+      <div class="card-emoji">${meta.emoji}</div>
+      <div class="card-name">${info.nombre}</div>
+      <div class="card-stripe"></div>
+    `;
+    card.style.background = meta.color;
+    card.addEventListener('click', () => Game.start(key));
+    grid.appendChild(card);
+  });
 }
 
-// Pintura primaria blanca para llenar canvas vacío antes de que el usuario haga nada al cargar app
-ctx.fillStyle = '#F7FFF7';
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+// ================================================================
+//  PROCEDURAL WORLD GENERATOR
+// ================================================================
+function generateWorld(vehicleKey) {
+  const cfg = LEVEL_CONFIGS[vehicleKey];
+  const canvas = document.getElementById('world-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 2400, H = 500;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
 
+  const rng = seededRNG(Date.now());
+
+  // --- Background gradient ---
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, cfg.bgTop);
+  grad.addColorStop(1, cfg.bgBottom);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // --- Ground / water strip ---
+  if (cfg.groundColor) {
+    if (vehicleKey === 'barco') {
+      // animated-look waves
+      for (let x = 0; x < W; x += 4) {
+        const wH = cfg.groundY + Math.sin(x * 0.05) * 8;
+        const wGrad = ctx.createLinearGradient(0, wH, 0, H);
+        wGrad.addColorStop(0, '#4FC3F7');
+        wGrad.addColorStop(1, '#0277BD');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(x, wH, 4, H - wH);
+      }
+    } else if (vehicleKey === 'coche') {
+      // road with dashes
+      ctx.fillStyle = '#555';
+      ctx.fillRect(0, cfg.groundY, W, H - cfg.groundY);
+      ctx.fillStyle = '#6BBF4E';
+      ctx.fillRect(0, cfg.groundY + 40, W, H - cfg.groundY - 40);
+      ctx.strokeStyle = '#FFF';
+      ctx.lineWidth = 4; ctx.setLineDash([40, 40]);
+      ctx.beginPath(); ctx.moveTo(0, cfg.groundY + 20); ctx.lineTo(W, cfg.groundY + 20); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      ctx.fillStyle = cfg.groundColor;
+      ctx.fillRect(0, cfg.groundY, W, H - cfg.groundY);
+      // grass texture bumps for train
+      if (vehicleKey === 'tren') {
+        ctx.fillStyle = '#4E9B35';
+        for (let x = 0; x < W; x += 30) {
+          ctx.beginPath();
+          ctx.arc(x + rng()*20, cfg.groundY, 12 + rng()*8, Math.PI, 0);
+          ctx.fill();
+        }
+        // rails
+        ctx.fillStyle = '#888'; ctx.fillRect(0, cfg.groundY - 4, W, 6);
+        ctx.fillStyle = '#666'; ctx.fillRect(0, cfg.groundY + 10, W, 6);
+        ctx.fillStyle = '#8B6914';
+        for (let x = 20; x < W; x += 50) ctx.fillRect(x, cfg.groundY - 6, 30, 22);
+      }
+    }
+  }
+
+  // --- Horizon hills / waves ---
+  if (vehicleKey === 'avion') {
+    // soft cloud-like horizon
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.ellipse(rng()*W, 380 + rng()*80, 200+rng()*200, 60+rng()*40, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // --- Departure zone (left) ---
+  drawZone(ctx, vehicleKey, cfg, 'departure', rng);
+  // --- Arrival zone (right) ---
+  drawZone(ctx, vehicleKey, cfg, 'arrival', rng);
+
+  // --- Static BG decorations ---
+  const bgObjs = cfg.bgObjects;
+  for (let x = 200; x < W - 200; x += 60) {
+    bgObjs.forEach(o => {
+      if (rng() < o.freq * 0.35) {
+        const y = o.yMin + rng() * (o.yMax - o.yMin);
+        ctx.font = `${24 + rng()*18}px serif`;
+        ctx.fillText(o.e, x + rng()*40 - 20, y);
+      }
+    });
+  }
+
+  return { rng, cfg };
+}
+
+function drawZone(ctx, vehicleKey, cfg, type, rng) {
+  const W = 2400, H = 500;
+  const isDepart = type === 'departure';
+  const xCenter = isDepart ? 80 : W - 80;
+
+  ctx.font = '48px serif';
+  const e = isDepart ? cfg.departureEmoji : cfg.arrivalEmoji;
+  ctx.fillText(e, xCenter - 24, (cfg.vehicleY || 240) + 20);
+
+  // Label bubble
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  const label = isDepart ? cfg.departureLabel : cfg.arrivalLabel;
+  ctx.font = 'bold 13px Nunito, sans-serif';
+  const tw = ctx.measureText(label).width + 16;
+  const bx = isDepart ? 20 : W - 20 - tw;
+  const by = (cfg.vehicleY || 240) + 30;
+  roundRect(ctx, bx, by, tw, 26, 10);
+  ctx.fillStyle = '#2C2C54';
+  ctx.fillText(label, bx + 8, by + 18);
+
+  // Decorative extras
+  if (vehicleKey === 'avion') {
+    ctx.font = '32px serif';
+    if (isDepart) { ctx.fillText('🏗', xCenter + 30, cfg.vehicleY + 40); }
+    else          { ctx.fillText('🌴', xCenter - 10, cfg.vehicleY + 40); ctx.fillText('🌴', xCenter + 30, cfg.vehicleY + 50); }
+  }
+  if (vehicleKey === 'tren') {
+    ctx.font = '36px serif';
+    if (isDepart) { ctx.fillText('🚉', xCenter + 20, cfg.groundY - 20); }
+    else          { ctx.fillText('🏔', xCenter - 20, cfg.groundY - 60); }
+  }
+  if (vehicleKey === 'barco') {
+    ctx.font = '36px serif';
+    if (isDepart) { ctx.fillText('⚓', xCenter + 20, cfg.groundY - 10); }
+    else          { ctx.fillText('🏝', xCenter - 20, cfg.groundY - 30); }
+  }
+  if (vehicleKey === 'coche') {
+    ctx.font = '32px serif';
+    if (isDepart) { ctx.fillText('🏘', xCenter + 10, cfg.groundY - 20); }
+    else          { ctx.fillText('🎡', xCenter - 20, cfg.groundY - 40); }
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath(); ctx.fill();
+}
+
+// Seeded RNG (simple LCG)
+function seededRNG(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+// ================================================================
+//  GAME ENGINE
+// ================================================================
+const Game = (() => {
+  let vehicleKey = null;
+  let progress = 0;          // 0..1
+  let scrollX = 0;
+  let speed = 0;
+  let maxSpeed = 3.5;
+  let friction = 0.94;
+  let animFrame = null;
+  let worldObjects = [];
+  let milestone = 10;
+  let cfg = null;
+  let isRunning = false;
+
+  const WORLD_W = 2400;
+  const VIEW_W  = 800;
+  const VIEWPORT_MARGIN = 150;
+  const MILESTONES = 10;
+  const TOTAL_SCROLL = WORLD_W - VIEW_W;
+
+  function start(key) {
+    vehicleKey = key;
+    progress = 0; scrollX = 0; speed = 0;
+    milestone = 10; isRunning = true;
+    cfg = LEVEL_CONFIGS[key];
+
+    // Switch screen
+    document.getElementById('home-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+
+    // Set vehicle emoji
+    const sprite = document.getElementById('vehicle-sprite');
+    sprite.textContent = VEHICLE_META[key].emoji;
+    sprite.style.top = cfg.vehicleY + 'px';
+    sprite.style.left = '120px';
+
+    // Generate world
+    generateWorld(key);
+
+    // Build interactive objects
+    buildWorldObjects(key);
+
+    // Build milestone dots
+    buildMilestoneDots();
+
+    // Reset UI
+    document.getElementById('progress-bar').style.width = '0%';
+    document.getElementById('countdown-badge').textContent = '10';
+    document.getElementById('win-screen').classList.remove('visible');
+    document.getElementById('tap-btn').textContent = '⭐';
+
+    // Vehicle bob animation
+    sprite.style.animation = key === 'barco'
+      ? 'cardFloat 1.5s ease-in-out infinite'
+      : key === 'avion'
+      ? 'cardFloat 2.5s ease-in-out infinite'
+      : 'none';
+
+    // Start loop
+    if (animFrame) cancelAnimationFrame(animFrame);
+    loop();
+  }
+
+  function buildWorldObjects(key) {
+    const world = document.getElementById('world');
+    // Remove old
+    world.querySelectorAll('.world-object').forEach(e => e.remove());
+    worldObjects = [];
+
+    const c = LEVEL_CONFIGS[key];
+    // Place ~12 interactive objects distributed across the world
+    const objs = c.interactiveObjects;
+    for (let i = 0; i < 12; i++) {
+      const rng2 = seededRNG(Date.now() + i * 999);
+      const obj = objs[Math.floor(rng2() * objs.length)];
+      const worldX = 300 + Math.random() * (WORLD_W - 500);
+      const y = c.vehicleY - 60 + (Math.random() - 0.5) * 120;
+
+      const el = document.createElement('div');
+      el.className = 'world-object';
+      el.textContent = obj.e;
+      el.dataset.worldX = worldX;
+      el.dataset.stars = obj.stars;
+      el.dataset.label = obj.label;
+      el.style.top = y + 'px';
+      el.style.left = worldX + 'px';
+
+      el.addEventListener('click', () => onObjectClick(el, obj));
+      world.appendChild(el);
+      worldObjects.push(el);
+    }
+  }
+
+  function buildMilestoneDots() {
+    const bar = document.getElementById('progress-bar-container');
+    bar.querySelectorAll('.milestone-dot').forEach(d => d.remove());
+    for (let i = 1; i <= MILESTONES; i++) {
+      const d = document.createElement('div');
+      d.className = 'milestone-dot';
+      d.style.left = (i / (MILESTONES + 1) * 100) + '%';
+      d.dataset.m = i;
+      bar.appendChild(d);
+    }
+  }
+
+  function onObjectClick(el, obj) {
+    if (el.dataset.clicked) return;
+    el.dataset.clicked = 1;
+    el.classList.add('bounce');
+
+    // Stars
+    const n = parseInt(el.dataset.stars);
+    for (let i = 0; i < n; i++) {
+      spawnStar(el);
+    }
+
+    // Sparkle
+    const sp = document.createElement('div');
+    sp.className = 'sparkle';
+    sp.textContent = '✨';
+    sp.style.left = el.style.left;
+    sp.style.top = (parseFloat(el.style.top) - 20) + 'px';
+    document.getElementById('world').appendChild(sp);
+    setTimeout(() => sp.remove(), 800);
+
+    // Boost
+    speed += 0.8 + n * 0.3;
+
+    setTimeout(() => { el.style.opacity = '0.3'; }, 600);
+  }
+
+  function spawnStar(el) {
+    const rect = el.getBoundingClientRect();
+    const appRect = document.getElementById('app').getBoundingClientRect();
+    const s = document.createElement('div');
+    s.className = 'score-star';
+    s.textContent = '⭐';
+    s.style.left = (rect.left - appRect.left + Math.random()*20 - 10) + 'px';
+    s.style.top  = (rect.top  - appRect.top) + 'px';
+    document.getElementById('game-screen').appendChild(s);
+    setTimeout(() => s.remove(), 1500);
+  }
+
+  function loop() {
+    if (!isRunning) return;
+
+    // Move world
+    speed += 0.05; // gravity / air push
+    if (speed > maxSpeed) speed = maxSpeed;
+    scrollX += speed;
+    speed *= friction;
+
+    if (scrollX >= TOTAL_SCROLL) {
+      scrollX = TOTAL_SCROLL;
+      progress = 1;
+      isRunning = false;
+      updateUI();
+      setTimeout(showWin, 600);
+      return;
+    }
+
+    progress = scrollX / TOTAL_SCROLL;
+    updateUI();
+    updateWorldObjects();
+    animFrame = requestAnimationFrame(loop);
+  }
+
+  function updateUI() {
+    // Scroll world canvas
+    document.getElementById('world-canvas').style.transform = `translateX(${-scrollX}px)`;
+    document.querySelectorAll('.world-object').forEach(el => {
+      el.style.transform = `translateX(${-scrollX}px)`;
+    });
+
+    // Progress bar
+    const pct = progress * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+
+    // Milestones — countdown from 10 to 1
+    const passed = Math.floor(progress * (MILESTONES + 1));
+    const remaining = Math.max(0, MILESTONES - passed + 1);
+    const badge = document.getElementById('countdown-badge');
+
+    // Check milestone crossing
+    if (remaining < milestone && remaining >= 0) {
+      milestone = remaining;
+      badge.textContent = milestone > 0 ? milestone : '🏁';
+      badge.classList.remove('pop');
+      void badge.offsetWidth;
+      badge.classList.add('pop');
+
+      // Flash milestone on screen
+      const popup = document.getElementById('milestone-popup');
+      popup.textContent = milestone > 0 ? milestone : '🏁';
+      popup.classList.remove('show');
+      void popup.offsetWidth;
+      popup.classList.add('show');
+
+      // Mark dots
+      document.querySelectorAll('.milestone-dot').forEach(d => {
+        const m = parseInt(d.dataset.m);
+        if (m <= (MILESTONES - milestone)) d.classList.add('passed');
+      });
+
+      // Particles
+      spawnParticles();
+    }
+
+    // Vehicle bob y based on speed
+    const sprite = document.getElementById('vehicle-sprite');
+    if (vehicleKey === 'barco') {
+      const wave = Math.sin(scrollX * 0.03) * 12;
+      sprite.style.top = (cfg.vehicleY + wave) + 'px';
+    } else if (vehicleKey === 'avion') {
+      const drift = Math.sin(scrollX * 0.02) * 15;
+      sprite.style.top = (cfg.vehicleY + drift) + 'px';
+    }
+  }
+
+  function updateWorldObjects() {
+    // No positional update needed; CSS transform handles it
+  }
+
+  function spawnParticles() {
+    const colors = cfg.particleColors;
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.width = p.style.height = (6 + Math.random()*8) + 'px';
+      p.style.left = (100 + Math.random() * 600) + 'px';
+      p.style.top  = (60 + Math.random() * 100) + 'px';
+      p.style.animationDelay = (Math.random() * 0.3) + 's';
+      document.getElementById('game-screen').appendChild(p);
+      setTimeout(() => p.remove(), 1200);
+    }
+  }
+
+  function showWin() {
+    const ws = document.getElementById('win-screen');
+    document.getElementById('win-emoji').textContent  = cfg.winEmoji;
+    document.getElementById('win-title').textContent = cfg.winTitle;
+    document.getElementById('win-sub').textContent   = cfg.winSub;
+    ws.classList.add('visible');
+  }
+
+  function restart() {
+    start(vehicleKey);
+  }
+
+  function goHome() {
+    isRunning = false;
+    if (animFrame) cancelAnimationFrame(animFrame);
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('home-screen').classList.add('active');
+    document.getElementById('win-screen').classList.remove('visible');
+  }
+
+  // Tap button: burst of speed
+  document.getElementById('tap-btn').addEventListener('click', () => {
+    if (!isRunning) return;
+    speed = Math.min(speed + 2.5, maxSpeed * 1.4);
+    const btn = document.getElementById('tap-btn');
+    btn.style.transform = 'scale(0.9) translateY(4px)';
+    setTimeout(() => btn.style.transform = '', 150);
+
+    // Mini burst particles
+    const c = cfg ? cfg.particleColors : ['#FFD93D'];
+    for (let i = 0; i < 5; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = c[Math.floor(Math.random()*c.length)];
+      p.style.width = p.style.height = (8 + Math.random()*6)+'px';
+      p.style.right = (30 + Math.random()*60)+'px';
+      p.style.bottom = (100 + Math.random()*60)+'px';
+      document.getElementById('game-screen').appendChild(p);
+      setTimeout(() => p.remove(), 1000);
+    }
+  });
+
+  document.getElementById('back-btn').addEventListener('click', goHome);
+
+  return { start, restart, goHome };
+})();
+
+// ================================================================
+//  INIT
+// ================================================================
+window.addEventListener('load', () => {
+  initHomeCanvas();
+  buildHomeScreen();
+});
 </script>
 </body>
 </html>
