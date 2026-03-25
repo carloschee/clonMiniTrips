@@ -133,8 +133,6 @@
     box-shadow: 0 6px 0 var(--sky-bottom), 0 8px 10px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
-    
-    /* Configuración para sprites individuales PNG en el menú */
     background-size: 80%; 
     background-position: center;
     background-repeat: no-repeat;
@@ -313,18 +311,12 @@
     --facing: -1; 
     transform: translateX(-50%) scaleX(var(--facing));
     z-index: 30;
-    
-    /* Configuración de tamaño para el sprite puro */
     width: 100px;
     height: 100px;
-    
-    /* Fondo transparente para que el PNG se integre al paisaje */
     background-color: transparent;
     background-size: contain;
-    background-position: center bottom; /* Anclado abajo para que toque el piso */
+    background-position: center bottom;
     background-repeat: no-repeat;
-    
-    /* Drop-shadow hace que la sombra siga la silueta del PNG, no el cuadro */
     filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.35));
   }
 
@@ -408,7 +400,6 @@
       <h1>Mini Trips!</h1>
     </div>
     <div class="mode-selector">
-      <!-- Botones enlazados a la carpeta "sprites" usando coche.png -->
       <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
       <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
       <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
@@ -429,7 +420,7 @@
     <div id="parallax-far" class="parallax-layer"></div>
     <div id="parallax-mid" class="parallax-layer"></div>
 
-    <!-- AGUA DINÁMICA (BARCO) -->
+    <!-- AGUA DINÁMICA (BARCO & AVIÓN) -->
     <svg id="dynamic-water">
       <path id="water-path-bg" fill="#2278A8" opacity="0.8" />
       <path id="water-path" fill="#3A9FD8" opacity="0.95" />
@@ -481,7 +472,7 @@
   let terrainSeedsBg = null; 
   const TRACK_LENGTH = 20000; 
 
-  // --- CONFIGURACIÓN DE MODOS (RUTAS A SPRITES INDIVIDUALES) ---
+  // --- CONFIGURACIÓN DE MODOS ---
   const config = {
     coche: { 
       spriteUrl: 'sprites/coche.png', bottomPos: '25%',
@@ -524,6 +515,9 @@
   // --- MATEMÁTICAS DEL TERRENO ---
   function getTerrainHeight(x, seeds) {
     if (!seeds) return 0;
+    
+    // Forzamos a que el terreno sea completamente plano antes del inicio y después de la meta
+    if (x <= 0 || x >= TRACK_LENGTH) return 0;
     
     let fade = 1;
     if (x < 1500) fade = x / 1500;
@@ -569,30 +563,31 @@
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
     const svgHeight = 2000; 
 
-    document.getElementById('dynamic-water').style.display = (currentMode === 'barco') ? 'block' : 'none';
+    // Activamos el agua para el barco y para el fondo del avión
+    document.getElementById('dynamic-water').style.display = (currentMode === 'barco' || currentMode === 'avion') ? 'block' : 'none';
 
-    // 1. TERRENO COCHE Y TREN (POLÍGONOS SÓLIDOS)
+    // 1. TERRENO COCHE Y TREN (Extendidos desde -3000 a TRACK_LENGTH + 3000 para evitar bloque vacío al iniciar)
     if (currentMode === 'coche' || currentMode === 'tren') {
-        let bgSVG = `<svg width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
-        let pathBg = `M 0,${svgHeight} `;
-        for (let x = 0; x <= TRACK_LENGTH; x += 100) {
+        let bgSVG = `<svg width="${TRACK_LENGTH + 6000}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
+        let pathBg = `M -3000,${svgHeight} `;
+        for (let x = -3000; x <= TRACK_LENGTH + 3000; x += 100) {
             pathBg += `L ${x},${svgHeight - (baseY_px + 80 + getTerrainHeight(x, terrainSeedsBg))} `;
         }
-        pathBg += `L ${TRACK_LENGTH},${svgHeight} Z`; 
+        pathBg += `L ${TRACK_LENGTH + 3000},${svgHeight} Z`; 
         bgSVG += `<path d="${pathBg}" fill="${cfg.bgFill}" stroke="${cfg.bgStroke}" stroke-width="10" stroke-linejoin="round"/>`;
         bgSVG += `</svg>`;
         midLayer.insertAdjacentHTML('beforeend', bgSVG);
 
-        let fgSVG = `<svg width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
-        let pathFg = `M 0,${svgHeight} `; 
-        let pathLine = `M 0,${svgHeight - baseY_px} `; 
+        let fgSVG = `<svg width="${TRACK_LENGTH + 6000}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
+        let pathFg = `M -3000,${svgHeight} `; 
+        let pathLine = `M -3000,${svgHeight - baseY_px} `; 
         
-        for (let x = 0; x <= TRACK_LENGTH; x += 50) {
+        for (let x = -3000; x <= TRACK_LENGTH + 3000; x += 50) {
             let ty = svgHeight - (baseY_px + getTerrainHeight(x, terrainSeeds));
             pathFg += `L ${x},${ty} `;
             pathLine += `L ${x},${ty} `;
         }
-        pathFg += `L ${TRACK_LENGTH},${svgHeight} Z`; 
+        pathFg += `L ${TRACK_LENGTH + 3000},${svgHeight} Z`; 
 
         fgSVG += `<path d="${pathFg}" fill="${cfg.fgFill}" />`;
         
@@ -608,42 +603,49 @@
         fgSVG += `</svg>`;
         track.insertAdjacentHTML('beforeend', fgSVG);
       
-    } else if (currentMode === 'avion') {
+    } 
+    // 2. ISLAS DEL AVIÓN (Creciendo desde el agua)
+    else if (currentMode === 'avion') {
       let runwayY_px = (20 / 100) * window.innerHeight; 
-      let endX = TRACK_LENGTH + 2000; 
+      let rStart = TRACK_LENGTH - 3000; // La pista de aterrizaje empieza 3000px antes de la meta
       
-      let fgSVG = `<svg width="${TRACK_LENGTH + 4000}" height="${svgHeight}" style="position:absolute; bottom:0; left:-2000px; overflow:visible;">`;
+      let fgSVG = `<svg width="${TRACK_LENGTH + 6000}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible;">`;
       
-      let startIsland = `M 0,${svgHeight} L 0,${svgHeight - runwayY_px} L 3000,${svgHeight - runwayY_px} C 3500,${svgHeight - runwayY_px} 3800,${svgHeight} 4200,${svgHeight} Z`;
-      let endIsland = `M ${endX},${svgHeight} C ${endX - 400},${svgHeight} ${endX - 800},${svgHeight - runwayY_px} ${endX - 1200},${svgHeight - runwayY_px} L ${endX + 2000},${svgHeight - runwayY_px} L ${endX + 2000},${svgHeight} Z`;
+      // Isla de Despegue (-3000 a 3200)
+      let startIsland = `M -3000,${svgHeight} L -3000,${svgHeight - runwayY_px} L 2000,${svgHeight - runwayY_px} C 2500,${svgHeight - runwayY_px} 2800,${svgHeight} 3200,${svgHeight} Z`;
+      // Isla de Aterrizaje (Emerge del agua, se nivela antes de la meta y se extiende)
+      let endIsland = `M ${rStart - 1000},${svgHeight} C ${rStart - 600},${svgHeight} ${rStart - 200},${svgHeight - runwayY_px} ${rStart + 500},${svgHeight - runwayY_px} L ${TRACK_LENGTH + 3000},${svgHeight - runwayY_px} L ${TRACK_LENGTH + 3000},${svgHeight} Z`;
 
       fgSVG += `<path d="${startIsland}" fill="#6BBF4E" />`;
       fgSVG += `<path d="${endIsland}" fill="#6BBF4E" />`;
       
-      let startDirt = `M 0,${svgHeight - runwayY_px} L 3000,${svgHeight - runwayY_px} C 3500,${svgHeight - runwayY_px} 3800,${svgHeight} 4200,${svgHeight}`;
-      let endDirt = `M ${endX},${svgHeight} C ${endX - 400},${svgHeight} ${endX - 800},${svgHeight - runwayY_px} ${endX - 1200},${svgHeight - runwayY_px} L ${endX + 2000},${svgHeight - runwayY_px}`;
+      let startDirt = `M -3000,${svgHeight - runwayY_px} L 2000,${svgHeight - runwayY_px} C 2500,${svgHeight - runwayY_px} 2800,${svgHeight} 3200,${svgHeight}`;
+      let endDirt = `M ${rStart - 1000},${svgHeight} C ${rStart - 600},${svgHeight} ${rStart - 200},${svgHeight - runwayY_px} ${rStart + 500},${svgHeight - runwayY_px} L ${TRACK_LENGTH + 3000},${svgHeight - runwayY_px}`;
       fgSVG += `<path d="${startDirt}" fill="none" stroke="#8B4513" stroke-width="25" />`;
       fgSVG += `<path d="${endDirt}" fill="none" stroke="#8B4513" stroke-width="25" />`;
 
-      fgSVG += `<line x1="0" y1="${svgHeight - runwayY_px - 5}" x2="2800" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
-      fgSVG += `<line x1="${endX - 1000}" y1="${svgHeight - runwayY_px - 5}" x2="${endX + 2000}" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
+      // Decoración de pista (pavimento gris)
+      fgSVG += `<line x1="-3000" y1="${svgHeight - runwayY_px - 5}" x2="1800" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
+      fgSVG += `<line x1="${rStart + 700}" y1="${svgHeight - runwayY_px - 5}" x2="${TRACK_LENGTH + 3000}" y2="${svgHeight - runwayY_px - 5}" stroke="#555555" stroke-width="20" stroke-linecap="round"/>`;
+      
       fgSVG += `</svg>`;
       track.insertAdjacentHTML('beforeend', fgSVG);
     }
 
-    let lineBottomPos = cfg.bottomPos;
-    if (currentMode === 'avion') lineBottomPos = '20%';
+    // Posición estricta de las líneas de Meta e Inicio
+    let lineBottomPx = baseY_px;
+    if (currentMode === 'avion') lineBottomPx = (20 / 100) * window.innerHeight;
 
     const start = document.createElement('div');
     start.className = 'start-line';
     start.style.left = '0px';
-    start.style.bottom = lineBottomPos;
+    start.style.bottom = lineBottomPx + 'px';
     track.appendChild(start);
 
     const finish = document.createElement('div');
     finish.className = 'finish-line';
     finish.style.left = TRACK_LENGTH + 'px';
-    finish.style.bottom = lineBottomPos;
+    finish.style.bottom = lineBottomPx + 'px';
     track.appendChild(finish);
 
     function addDecor(layer, decorArray, count, speedMultiplier, isTrack = false) {
@@ -653,7 +655,19 @@
         el.className = isTrack ? 'track-decor' : 'parallax-decor';
         el.innerText = decorArray[Math.floor(Math.random() * decorArray.length)];
         
-        const logicalPos = 200 + Math.random() * TRACK_LENGTH; 
+        let logicalPos;
+        // Restricción para que en avión no salgan árboles sobre el agua
+        if (currentMode === 'avion' && isTrack) {
+           if (Math.random() > 0.5) {
+               logicalPos = -2000 + Math.random() * 4000; 
+           } else {
+               logicalPos = (TRACK_LENGTH - 2000) + Math.random() * 4000; 
+           }
+        } else {
+           // Decoración repartida desde antes del comienzo hasta después del final
+           logicalPos = -2000 + Math.random() * (TRACK_LENGTH + 4000); 
+        }
+        
         const renderPos = logicalPos * speedMultiplier;
         el.style.left = renderPos + 'px';
         
@@ -663,7 +677,10 @@
 
         if (isTrack) {
             elHeight += getTerrainHeight(logicalPos, terrainSeeds);
-            if (currentMode === 'avion' || currentMode === 'barco') {
+            if (currentMode === 'avion') {
+                elHeight = (20 / 100) * window.innerHeight; // Nivel de la isla
+                vOffset = (Math.random() - 0.2) * 50;
+            } else if (currentMode === 'barco') {
                 vOffset = (Math.random() - 0.2) * 200;
             } else {
                 vOffset = (Math.random() - 0.5) * 40;
@@ -687,9 +704,9 @@
       }
     }
 
-    addDecor(track, cfg.decorNear, 70, 1.0, true);
-    addDecor(midLayer, cfg.decorMid, 40, 0.5);
-    addDecor(farLayer, cfg.decorFar, 30, 0.2);
+    addDecor(track, cfg.decorNear, 80, 1.0, true);
+    addDecor(midLayer, cfg.decorMid, 50, 0.5);
+    addDecor(farLayer, cfg.decorFar, 40, 0.2);
 
     for (let i = 1; i <= 10; i++) {
         const marker = document.createElement('div');
@@ -706,7 +723,6 @@
     const player = document.getElementById('player');
     const cfg = config[currentMode];
 
-    // Asignar el fondo PNG individual al jugador (sin estilo cuadrado)
     player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
     terrainSeeds = {
@@ -823,13 +839,19 @@
     
     let playerWorldX = (progress / 100) * TRACK_LENGTH;
     
-    if (currentMode === 'barco') {
+    // --- LÓGICA DEL AGUA ---
+    if (currentMode === 'barco' || currentMode === 'avion') {
       let time = Date.now();
       let waveTime = time * 0.002;
       let waveTimeBg = time * 0.0015;
 
+      // El agua del avión la dibujamos un poco más abajo para que las islas destaquen por encima
+      let waterBaseY = (currentMode === 'avion') ? window.innerHeight * 0.15 : baseY_px;
+
       let waveH = Math.sin(playerWorldX * 0.015 + waveTime) * 15 + Math.sin(playerWorldX * 0.008 + waveTime * 1.5) * 10;
-      dynamicBaseY_px = baseY_px + waveH;
+      if (currentMode === 'barco') {
+         dynamicBaseY_px = waterBaseY + waveH;
+      }
 
       let pathFg = `M -100, ${window.innerHeight} `;
       let pathBg = `M -100, ${window.innerHeight} `;
@@ -838,11 +860,11 @@
         let wX = playerWorldX + (px - window.innerWidth/2);
 
         let fgH = Math.sin(wX * 0.015 + waveTime) * 15 + Math.sin(wX * 0.008 + waveTime * 1.5) * 10;
-        let fgY = window.innerHeight - (baseY_px + fgH);
+        let fgY = window.innerHeight - (waterBaseY + fgH);
         pathFg += `L ${px}, ${fgY} `;
 
         let bgH = Math.sin(wX * 0.012 + waveTimeBg + 10) * 12 + Math.sin(wX * 0.005 + waveTimeBg * 1.2) * 15;
-        let bgY = window.innerHeight - (baseY_px + bgH + 15);
+        let bgY = window.innerHeight - (waterBaseY + bgH + 15);
         pathBg += `L ${px}, ${bgY} `;
       }
 
@@ -852,15 +874,17 @@
       document.getElementById('water-path').setAttribute('d', pathFg);
       document.getElementById('water-path-bg').setAttribute('d', pathBg);
 
-      let waveDeriv = Math.cos(playerWorldX * 0.015 + waveTime) * 15 * 0.015 + Math.cos(playerWorldX * 0.008 + waveTime * 1.5) * 10 * 0.008;
-      rotationAngle = waveDeriv * (180 / Math.PI) * 1.5;
-
+      if (currentMode === 'barco') {
+         let waveDeriv = Math.cos(playerWorldX * 0.015 + waveTime) * 15 * 0.015 + Math.cos(playerWorldX * 0.008 + waveTime * 1.5) * 10 * 0.008;
+         rotationAngle = waveDeriv * (180 / Math.PI) * 1.5;
+      }
     } else {
       dynamicBaseY_px = baseY_px + getTerrainHeight(playerWorldX, terrainSeeds);
     }
 
     yPos += ySpeed;
 
+    // --- FÍSICA Y ALTURAS POR MODO ---
     if (currentMode === 'coche') {
       let currentGravity = isTouching ? gravity * 0.15 : gravity;
       ySpeed -= currentGravity;
@@ -884,23 +908,36 @@
       }
     } else if (currentMode === 'avion') {
       let runwayY_px = (20 / 100) * window.innerHeight;
-      let cruiseY_px = baseY_px;
+      let cruiseY_px = baseY_px; // 60% altitud de vuelo
       const tDist = 2000;
+      let rStart = TRACK_LENGTH - 3000;
+      let descentStart = rStart - 1500; 
+      let descentEnd = rStart + 500;   
 
+      // Despegue (Isla inicial)
       if (playerWorldX < tDist) {
-        let p = playerWorldX / tDist;
+        let p = playerWorldX / tDist; 
         yPos = runwayY_px + (cruiseY_px - runwayY_px) * (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
         ySpeed = 0;
         if (speed < mediumSpeed) speed += 0.2;
-      } else if (playerWorldX > TRACK_LENGTH - tDist) {
-        let p = (playerWorldX - (TRACK_LENGTH - tDist)) / tDist;
+      } 
+      // Descenso hacia la isla final
+      else if (playerWorldX > descentStart && playerWorldX <= descentEnd) {
+        let p = (playerWorldX - descentStart) / (descentEnd - descentStart);
         yPos = cruiseY_px - (cruiseY_px - runwayY_px) * (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
         ySpeed = 0;
+      } 
+      // Aterrizaje completado (corriendo sobre la pista)
+      else if (playerWorldX > descentEnd) {
+        yPos = runwayY_px;
+        ySpeed = 0;
         if (speed < mediumSpeed) speed += 0.2; 
-      } else {
+      } 
+      // Vuelo normal
+      else {
         ySpeed *= 0.92;
-        if (yPos < baseY_px * 0.3) {
-          yPos = baseY_px * 0.3;
+        if (yPos < cruiseY_px * 0.5) { // Limitar para que no toque el agua accidentalmente
+          yPos = cruiseY_px * 0.5;
           if (ySpeed < 0) ySpeed = 0;
         }
       }
@@ -912,16 +949,24 @@
       if (ySpeed > 0) ySpeed = 0;
     }
     
+    // --- ROTACIÓN ---
     if (currentMode === 'coche' || currentMode === 'tren') {
       const th1 = getTerrainHeight(playerWorldX, terrainSeeds);
       const th2 = getTerrainHeight(playerWorldX + 20, terrainSeeds); 
       rotationAngle = Math.atan2(th2 - th1, 20) * (180 / Math.PI);
     } else if (currentMode === 'avion') {
       const tDist = 2000;
+      let rStart = TRACK_LENGTH - 3000;
+      let descentStart = rStart - 1500;
+      let descentEnd = rStart + 500;
+
       if (playerWorldX < tDist) {
-        rotationAngle = 15 * Math.sin((playerWorldX / tDist) * Math.PI);
-      } else if (playerWorldX > TRACK_LENGTH - tDist) {
-        rotationAngle = -10 * Math.sin(((playerWorldX - (TRACK_LENGTH - tDist)) / tDist) * Math.PI);
+        rotationAngle = 15 * Math.sin((playerWorldX / tDist) * Math.PI); // Cabeceo al despegar
+      } else if (playerWorldX > descentStart && playerWorldX < descentEnd) {
+        let p = (playerWorldX - descentStart) / (descentEnd - descentStart);
+        rotationAngle = -15 * Math.sin(p * Math.PI); // Cabeceo hacia abajo al aterrizar
+      } else if (playerWorldX >= descentEnd) {
+        rotationAngle = 0; // Nivelado en la pista final
       } else {
         rotationAngle = ySpeed * 1.5;
       }
@@ -929,9 +974,6 @@
 
     // --- RENDERIZADO DEL SPRITE ---
     const player = document.getElementById('player');
-    
-    // Asumimos que los dibujos están hechos mirando a la izquierda (-1)
-    // Si la velocidad es positiva (>0.5) giramos el sprite (1)
     const currentFacing = parseFloat(player.style.getPropertyValue('--facing') || -1);
     const newFacing = speed > 0.5 ? 1 : (speed < -0.5 ? -1 : currentFacing);
     player.style.setProperty('--facing', newFacing);
