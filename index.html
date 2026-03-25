@@ -2,7 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<!-- Meta etiquetas cruciales para iPhone 13 y PWA -->
+
+<!-- =========================================================================
+     1. CONFIGURACIÓN DEL NAVEGADOR Y DISPOSITIVOS MÓVILES
+     Estas etiquetas aseguran que el juego se vea bien en celulares, 
+     use todo el ancho de la pantalla (incluso bajo el 'notch' del iPhone)
+     y permita instalarse como una aplicación web (PWA).
+     ========================================================================= -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,8 +18,14 @@
 <title>Mini Trips!</title>
 
 <style>
+  /* Importación de fuentes amigables y redondeadas desde Google Fonts */
   @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
 
+  /* =========================================================================
+     2. VARIABLES DE DISEÑO (PALETA DE COLORES)
+     Centralizamos los colores aquí. Si quieres cambiar el color del mar o del 
+     pasto, solo cambias el valor aquí y se actualiza en todo el juego.
+     ========================================================================= */
   :root {
     --sky-top: #87CEEB;
     --sky-bottom: #B8E4F9;
@@ -36,7 +48,11 @@
     --btn-blue-dark: #29B6F6;
   }
 
-  /* Reset y preparación para iPhone 13 */
+  /* =========================================================================
+     3. RESETEO Y ESTILOS BASE
+     Evita comportamientos raros como el resaltado azul al tocar botones en 
+     el celular y quita los márgenes por defecto del navegador.
+     ========================================================================= */
   * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -49,10 +65,10 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow: hidden; /* Evita que la pantalla haga 'scroll' nativo */
     font-family: 'Nunito', sans-serif;
     background-color: var(--sky-top);
-    touch-action: none;
+    touch-action: none; /* Desactiva gestos nativos (como el pull-to-refresh) */
   }
 
   h1, h2, h3 {
@@ -61,7 +77,12 @@
     text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
   }
 
-  /* Sistema de Pantallas */
+  /* =========================================================================
+     4. GESTOR DE PANTALLAS (VISTAS DEL JUEGO)
+     El juego tiene 3 pantallas principales (Inicio, Juego, Victoria).
+     Todas están ocultas (display: none) por defecto. Solo la que tenga 
+     la clase '.active' se mostrará.
+     ========================================================================= */
   .screen {
     position: absolute;
     top: 0;
@@ -71,6 +92,7 @@
     display: none;
     flex-direction: column;
     align-items: center;
+    /* env() respeta las áreas seguras de los celulares modernos (notch/barras) */
     padding-top: env(safe-area-inset-top, 47px);
     padding-bottom: env(safe-area-inset-bottom, 34px);
     background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
@@ -81,15 +103,14 @@
     display: flex;
   }
 
-  /* HOME SCREEN */
+  /* --- 4.1. PANTALLA DE INICIO (Menú Principal) --- */
   #home-screen {
     justify-content: center;
-    gap: clamp(10px, 4vh, 30px); /* Espacio elástico para evitar desbordes */
+    gap: clamp(10px, 4vh, 30px);
     background: var(--ui-bg);
-    /* Protege el contenido del "notch" */
     padding-left: max(20px, env(safe-area-inset-left));
     padding-right: max(20px, env(safe-area-inset-right));
-    flex-direction: column !important; /* Fuerza a que el título SIEMPRE esté arriba */
+    flex-direction: column !important; /* Mantiene el título arriba de los botones */
   }
   
   .title-card {
@@ -105,22 +126,23 @@
   .title-card h1 {
     font-size: clamp(1.8rem, 6vmin, 3.5rem);
     color: var(--btn-orange);
-    white-space: nowrap;
+    white-space: nowrap; /* Evita que el título se rompa en dos líneas */
     margin: 0;
   }
 
+  /* Cuadrícula de 1 fila x 4 columnas para los botones de vehículos */
   .mode-selector {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Retícula de 1 fila x 4 columnas SIEMPRE */
+    grid-template-columns: repeat(4, 1fr);
     gap: clamp(8px, 2vw, 20px);
     justify-content: center;
     width: 100%;
-    max-width: 500px; /* Ancho máximo ajustado para 4 botones en línea */
+    max-width: 500px;
   }
 
   .mode-btn {
     width: 100%;
-    aspect-ratio: 1 / 1; /* Mantiene los botones perfectamente cuadrados */
+    aspect-ratio: 1 / 1; /* Botones siempre cuadrados */
     max-width: 110px;
     max-height: 110px;
     border-radius: clamp(12px, 4vmin, 25px);
@@ -139,64 +161,37 @@
   }
 
   .mode-btn:active {
-    transform: translateY(6px);
+    transform: translateY(6px); /* Efecto de "presionar" el botón */
     box-shadow: 0 0 0 var(--sky-bottom);
     border: 3px solid var(--btn-orange);
   }
 
-  /* MEDIA QUERY PARA IPHONE EN HORIZONTAL (LANDSCAPE) */
+  /* Adaptación específica para cuando el celular se pone en horizontal (landscape) */
   @media (orientation: landscape) and (max-height: 500px) {
     #home-screen {
-      /* Ajustamos los márgenes verticales en landscape para que quepan título y botones */
       gap: 15px;
       padding-top: env(safe-area-inset-top, 10px);
       padding-bottom: env(safe-area-inset-bottom, 10px);
     }
-    
-    .mode-selector {
-      max-width: 450px; 
-    }
-    
-    .mode-btn {
-      box-shadow: 0 4px 0 var(--sky-bottom);
-    }
-    
-    .mode-btn:active {
-      transform: translateY(4px);
-    }
+    .mode-selector { max-width: 450px; }
+    .mode-btn { box-shadow: 0 4px 0 var(--sky-bottom); }
+    .mode-btn:active { transform: translateY(4px); }
   }
 
-  .play-btn {
-    background: var(--btn-green);
-    color: white;
-    font-family: 'Fredoka One', cursive;
-    font-size: 2rem;
-    padding: 15px 50px;
-    border: none;
-    border-radius: 30px;
-    box-shadow: 0 8px 0 var(--btn-green-dark);
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-
-  .play-btn:active {
-    transform: translateY(8px);
-    box-shadow: 0 0 0 var(--btn-green-dark);
-  }
-
-  /* GAME SCREEN */
+  /* --- 4.2. PANTALLA DE JUEGO (La acción principal) --- */
   #game-screen {
     justify-content: space-between;
     overflow: hidden;
   }
 
+  /* Cabecera del juego: Barra de progreso y botón de regresar */
   .game-header {
     width: 90%;
     margin-top: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
-    z-index: 50;
+    z-index: 50; /* Z-index alto para que nada lo tape */
   }
 
   .back-btn {
@@ -208,10 +203,11 @@
     font-weight: bold;
     font-size: 1.2rem;
     box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-    order: 2; /* Mueve el botón de regreso a la derecha */
+    order: 2; /* Pone el botón a la derecha de la barra */
   }
   .back-btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
 
+  /* Barra superior que se va llenando de color naranja */
   .progress-bar {
     flex-grow: 1;
     height: 25px;
@@ -220,16 +216,17 @@
     border: 3px solid white;
     overflow: hidden;
     position: relative;
-    order: 1; /* Mantiene la barra a la izquierda */
+    order: 1;
   }
 
   .progress-fill {
     height: 100%;
-    width: 0%;
+    width: 0%; /* Esta anchura se controla mediante JavaScript */
     background: var(--btn-orange);
     transition: width 0.1s linear;
   }
 
+  /* El bloque sólido inferior (pasto, agua o tierra) */
   .environment {
     position: absolute;
     bottom: 0;
@@ -240,6 +237,7 @@
     z-index: 1;
   }
 
+  /* Patrón de puntitos de fondo para dar sensación de velocidad */
   .scenery {
     position: absolute;
     width: 200%;
@@ -251,18 +249,18 @@
     z-index: 2;
   }
 
-  /* CONTENEDOR DE PISTA DINÁMICA */
+  /* Contenedor que se desplaza horizontalmente dando la ilusión de movimiento */
   #track {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
-    z-index: 15; /* Detrás del jugador, pero encima del fondo */
+    pointer-events: none; /* Evita que la pista bloquee los toques táctiles */
+    z-index: 15;
   }
 
-  /* Elementos de la Pista */
+  /* Decoraciones generadas por JS (Banderas, carteles y emojis) */
   .start-line, .finish-line {
     position: absolute;
     width: 20px;
@@ -322,7 +320,7 @@
   }
 
   .track-marker::after {
-    content: '';
+    content: ''; /* El palito del cartel */
     position: absolute;
     top: 100%;
     width: 8px;
@@ -341,16 +339,15 @@
     filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
   }
 
-  /* JUGADOR */
+  /* --- 4.3. EL JUGADOR (Coche, Tren, Avión, Barco) --- */
   #player {
     position: absolute;
     bottom: 20%;
-    left: 50%;
-    --facing: 1;
+    left: 50%; /* Siempre fijo al centro de la pantalla */
+    --facing: 1; /* 1 = mira a la derecha, -1 = mira a la izquierda */
     transform: translateX(-50%) scaleX(var(--facing));
     font-size: 5rem;
     z-index: 30;
-    /* transition: bottom 0.3s; - Removida para usar motor de gravedad manual */
     width: 100px;
     height: 100px;
     display: flex;
@@ -372,10 +369,11 @@
     pointer-events: none;
     z-index: 40;
     text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-    transition: opacity 0.3s;
+    transition: opacity 0.3s; /* Desaparece suavemente cuando tocas la pantalla */
   }
 
-  /* Efecto de partículas */
+  /* --- 4.4. EFECTOS ESPECIALES Y ANIMACIONES --- */
+  /* Partículas de polvo/viento/salpicaduras */
   .particle {
     position: absolute;
     border-radius: 50%;
@@ -390,12 +388,7 @@
     100% { transform: translateY(-100px) scale(0); opacity: 0; }
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateX(-50%) scaleX(var(--facing)) translateY(0); }
-    50% { transform: translateX(-50%) scaleX(var(--facing)) translateY(-10px); }
-  }
-
-  /* CHARCOS DE AGUA */
+  /* Charcos de agua para coches y trenes */
   .puddle {
     position: absolute;
     background: rgba(58, 159, 216, 0.7);
@@ -407,7 +400,7 @@
     z-index: 10;
   }
 
-  /* WIN SCREEN */
+  /* --- 4.5. PANTALLA DE VICTORIA --- */
   #win-screen {
     justify-content: center;
     background: var(--btn-green);
@@ -432,18 +425,45 @@
     padding: 10px 20px;
     border-radius: 20px;
   }
+  
+  /* Botón genérico y reutilizable */
+  .play-btn {
+    background: var(--btn-green);
+    color: white;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    padding: 15px 50px;
+    border: none;
+    border-radius: 30px;
+    box-shadow: 0 8px 0 var(--btn-green-dark);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .play-btn:active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 var(--btn-green-dark);
+  }
 
 </style>
 </head>
 <body>
 
-  <!-- PANTALLA DE INICIO -->
+  <!-- =========================================================================
+       5. ESTRUCTURA HTML (DOM)
+       Aquí es donde declaramos los contenedores reales que el CSS estilizará 
+       y que el JavaScript controlará.
+       ========================================================================= -->
+
+  <!-- PANTALLA DE INICIO (Menú Principal) -->
   <div id="home-screen" class="screen active">
     <div class="title-card">
       <h1>Mini Trips!</h1>
     </div>
 
+    <!-- Contenedor de la retícula de 4 botones -->
     <div class="mode-selector">
+      <!-- "onpointerdown" es mejor que "onclick" porque responde más rápido en pantallas táctiles -->
       <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
       <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
       <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
@@ -451,7 +471,7 @@
     </div>
   </div>
 
-  <!-- PANTALLA DE JUEGO -->
+  <!-- PANTALLA DE JUEGO (La arena de acción) -->
   <div id="game-screen" class="screen">
     <div class="game-header">
       <button class="back-btn" id="back-btn">⬅️</button>
@@ -460,12 +480,15 @@
       </div>
     </div>
 
+    <!-- Fondo y piso -->
     <div class="environment" id="environment">
       <div class="scenery" id="scenery"></div>
     </div>
 
+    <!-- Aquí se inyectan las vías, carreteras, carteles y montañas (vía JavaScript) -->
     <div id="track"></div>
 
+    <!-- El sprite del jugador -->
     <div id="player">🚗</div>
 
     <div class="instructions" id="game-hints">
@@ -477,12 +500,21 @@
   <div id="win-screen" class="screen">
     <div class="trophy">🏆</div>
     <h1>¡LLEGASTE!</h1>
+    <!-- Aquí JavaScript inyectará el tiempo final -->
     <div class="time-text">Tiempo: <span id="time-display">0.0</span>s</div>
     <button class="play-btn" style="background: var(--btn-orange); box-shadow: 0 8px 0 var(--btn-orange-dark);" onpointerdown="goHome()">Volver al Menú</button>
   </div>
 
 <script>
-  // --- INYECCIÓN DE MANIFEST PWA ---
+  /* =========================================================================
+     6. LÓGICA DE JAVASCRIPT (CEREBRO DEL JUEGO)
+     Este bloque controla las físicas, la generación de mapas, 
+     los toques de la pantalla y el ciclo constante de animación (Game Loop).
+     ========================================================================= */
+
+  // --- 6.1 INYECCIÓN DE MANIFEST PWA ---
+  // Esto engaña a navegadores móviles diciéndoles "soy una app instalable".
+  // Permite agregar el juego al inicio del celular sin descargar un archivo.
   const manifestJSON = {
     "name": "Mini Trips",
     "short_name": "Mini Trips",
@@ -490,31 +522,29 @@
     "display": "standalone",
     "background_color": "#87CEEB",
     "theme_color": "#87CEEB",
-    "icons": [
-      {
+    "icons": [{
         "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2387CEEB'/%3E%3Ctext y='65' x='15' font-size='60'%3E🚗%3C/text%3E%3C/svg%3E",
         "sizes": "192x192",
         "type": "image/svg+xml"
-      }
-    ]
+    }]
   };
   const linkManifest = document.createElement('link');
   linkManifest.rel = 'manifest';
   linkManifest.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
   document.head.appendChild(linkManifest);
 
-  // --- VARIABLES DEL JUEGO ---
-  let currentMode = 'coche';
-  let isRunning = false;
-  let progress = 0; // 0 a 100
-  let speed = 0;
-  let maxSpeed = 25; 
-  let mediumSpeed = 4;
-  let distanceScrolled = 0;
-  let startTime = 0;
-  let gameLoopReq;
+  // --- 6.2 VARIABLES GLOBALES DE ESTADO ---
+  let currentMode = 'coche'; // Qué vehículo estamos usando
+  let isRunning = false;     // ¿El juego está activo?
+  let progress = 0;          // Porcentaje de la pista completado (0 a 100)
+  let speed = 0;             // Velocidad actual del jugador
+  let maxSpeed = 25;         // Límite de velocidad
+  let mediumSpeed = 4;       // Velocidad base al tocar los bordes
+  let distanceScrolled = 0;  // Para mover el fondo infinito
+  let startTime = 0;         // Para calcular cuánto tardó en ganar
+  let gameLoopReq;           // Identificador del ciclo de animación
 
-  // Variables de control táctil y vertical
+  // --- VARIABLES DE TOQUE (SWIPE & TOUCH) ---
   let isTouching = false;
   let touchX = 0;
   let lastTouchX = 0;
@@ -522,29 +552,30 @@
   let lastTouchY = 0;
   let lastTouchTime = 0;
 
-  // Motor de Gravedad
-  let yPos = 0;
-  let ySpeed = 0;
-  let baseY_px = 0;
-  let gravity = 0.6;
+  // --- VARIABLES DEL MOTOR DE FÍSICAS (GRAVEDAD) ---
+  let yPos = 0;              // Posición vertical del jugador en pixeles
+  let ySpeed = 0;            // Fuerza con la que sube o cae
+  let baseY_px = 0;          // La línea base del suelo
+  let gravity = 0.6;         // Fuerza de gravedad constante hacia abajo
 
-  // Sistema de Terreno y Charcos
-  let terrainSeeds = null;
-  let puddlesData = [];
-  let puddlesHit = [];
+  // --- SISTEMA DE TERRENO Y CHARCOS ---
+  let terrainSeeds = null;   // Variables aleatorias para dibujar colinas
+  let puddlesData = [];      // Dónde hay charcos de agua
+  let puddlesHit = [];       // Charcos que ya pisamos
 
-  // Longitud de la pista física (Niveles 10x más largos)
-  const TRACK_LENGTH = 20000;
+  // Longitud total del mapa físico a recorrer.
+  const TRACK_LENGTH = 20000; 
 
-  // Configuración por modo de transporte
+  // --- 6.3 DICCIONARIO DE CONFIGURACIÓN POR VEHÍCULO ---
+  // Define las características visuales dependiendo del modo de juego elegido.
   const config = {
     coche: { 
       emoji: '🚗', 
       envColor: 'var(--ground)', 
       borderColor: 'var(--ground-dark)', 
-      bottomPos: '25%',
+      bottomPos: '25%', // Altura desde la cual empieza
       particleColors: ['#FFD93D', '#FFFFFF', '#AAAAAA'],
-      decor: ['🌲', '🌳', '🪨', '🍄', '🌻', '🛑', '🪵']
+      decor: ['🌲', '🌳', '🪨', '🍄', '🌻', '🛑', '🪵'] // Emojis de fondo
     },
     tren: { 
       emoji: '🚂', 
@@ -572,17 +603,19 @@
     }
   };
 
-  // --- LÓGICA DE TERRENO ---
+  // --- 6.4 MATEMÁTICAS DEL TERRENO (PROCEDURAL GENERATION) ---
+  // Calcula la altura del piso en cualquier coordenada 'X' dada.
+  // Combina 3 ondas senoidales distintas para simular colinas naturales al azar.
   function getTerrainHeight(x) {
-    if (currentMode !== 'coche' && currentMode !== 'tren') return 0;
+    if (currentMode !== 'coche' && currentMode !== 'tren') return 0; // Mar y Cielo son planos
     if (!terrainSeeds) return 0;
     
-    // Suavizado en el inicio y la meta para que sean zonas planas
+    // Zonas de amortiguamiento (fade): Obligamos a que el inicio y la meta sean planos (altura 0)
     let fade = 1;
     if (x < 1500) fade = x / 1500;
     else if (x > TRACK_LENGTH - 1500) fade = (TRACK_LENGTH - x) / 1500;
     
-    // Combinación de ondas seno y coseno para colinas aleatorias
+    // Cálculo trigonométrico usando las "semillas" aleatorias del nivel
     const h1 = Math.sin(x / terrainSeeds.f1) * terrainSeeds.a1;
     const h2 = Math.cos(x / terrainSeeds.f2) * terrainSeeds.a2;
     const h3 = Math.sin(x / terrainSeeds.f3) * terrainSeeds.a3;
@@ -590,66 +623,71 @@
     return (h1 + h2 + h3) * fade;
   }
 
-  // --- LÓGICA DE INTERFAZ Y PISTA ---
-
+  // --- 6.5 NAVEGACIÓN DE MENÚS ---
   function selectMode(mode) {
     currentMode = mode;
-    startGame(); // Inicia el recorrido automáticamente al elegir el vehículo
+    startGame(); // Inicia la partida tan pronto se toca un vehículo
   }
 
   function goHome() {
     isRunning = false;
-    cancelAnimationFrame(gameLoopReq);
+    cancelAnimationFrame(gameLoopReq); // Detiene el motor del juego
     document.getElementById('win-screen').classList.remove('active');
     document.getElementById('game-screen').classList.remove('active');
-    document.getElementById('home-screen').classList.add('active');
+    document.getElementById('home-screen').classList.add('active'); // Muestra el menú
   }
 
-  // Cambio de 'click' a 'pointerdown' para el botón de regreso
   document.getElementById('back-btn').addEventListener('pointerdown', goHome);
 
+  // --- 6.6 GENERADOR VISUAL DE LA PISTA ---
+  // Se encarga de construir la línea SVG del piso, carteles y decoración HTML a lo largo de los 20,000 pixeles.
   function generateTrack() {
     const track = document.getElementById('track');
-    track.innerHTML = ''; // Limpiar pista
+    track.innerHTML = ''; // Limpiar pista vieja
     const cfg = config[currentMode];
     
-    // Necesitamos baseY_px aquí para posicionar correctamente los elementos
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
 
-    // --- DIBUJAR TERRENO (Carretera o Vías) ---
-    const svgHeight = 2000; // Alto suficiente para cubrir elevaciones
+    // --- DIBUJAR TERRENO (Carretera o Vías usando gráficos de vectores SVG) ---
+    const svgHeight = 2000; 
     if (currentMode === 'coche' || currentMode === 'tren') {
+      // Abre etiqueta SVG
       let svgHTML = `<svg id="terrain-svg" width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible; z-index: 5;">`;
+      
+      // La 'M' es el punto inicial de la línea
       let pathData = `M 0,${svgHeight - baseY_px} `;
       
+      // Loop: Va calculando y trazando una línea recta 'L' cada 100 pixeles de distancia
       for (let x = 0; x <= TRACK_LENGTH; x += 100) {
           pathData += `L ${x},${svgHeight - (baseY_px + getTerrainHeight(x))} `;
       }
 
+      // Aplica colores y estilos a la línea generada dependiendo del vehículo
       if (currentMode === 'coche') {
-          // Carretera gris con líneas discontinuas blancas
+          // Asfalto gris oscuro con borde verde y líneas blancas punteadas
           svgHTML += `<path d="${pathData}" fill="none" stroke="var(--ground-dark)" stroke-width="45" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, 5)"/>`;
           svgHTML += `<path d="${pathData}" fill="none" stroke="#606060" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>`;
           svgHTML += `<path d="${pathData}" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="20, 30" stroke-linecap="round" stroke-linejoin="round"/>`;
       } else {
-          // Vías de tren con durmientes de madera
+          // Vías férreas color madera y líneas metálicas
           svgHTML += `<path d="${pathData}" fill="none" stroke="#5D4037" stroke-width="35" stroke-dasharray="8, 24" stroke-linecap="round" stroke-linejoin="round"/>`;
           svgHTML += `<path d="${pathData}" fill="none" stroke="#90A4AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, -12)"/>`;
           svgHTML += `<path d="${pathData}" fill="none" stroke="#90A4AE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, 12)"/>`;
       }
       svgHTML += `</svg>`;
-      track.insertAdjacentHTML('beforeend', svgHTML);
+      track.insertAdjacentHTML('beforeend', svgHTML); // Inyecta el SVG en el DOM
+      
     } else if (currentMode === 'avion') {
-      // DIBUJAR PISTAS DE ATERRIZAJE PARA EL AVIÓN
-      let runwayY_px = (20 / 100) * window.innerHeight; // Las pistas estarán al 20% de altura
+      // DIBUJAR PISTAS FÍSICAS DE ATERRIZAJE PARA EL AVIÓN
+      let runwayY_px = (20 / 100) * window.innerHeight; 
       let svgHTML = `<svg id="terrain-svg" width="${TRACK_LENGTH}" height="${svgHeight}" style="position:absolute; bottom:0; left:0; overflow:visible; z-index: 5;">`;
 
-      // Base Verde y Pista de Inicio (Despegue extendido hacia atrás para llenar la pantalla)
+      // Cuadrados que dibujan la base y pista de inicio
       svgHTML += `<rect x="-2000" y="${svgHeight - runwayY_px}" width="4000" height="2000" fill="#6BBF4E" />`;
       svgHTML += `<rect x="-2000" y="${svgHeight - runwayY_px}" width="4000" height="25" fill="#555555" />`;
       svgHTML += `<line x1="-2000" y1="${svgHeight - runwayY_px + 12}" x2="2000" y2="${svgHeight - runwayY_px + 12}" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="40, 60" />`;
 
-      // Base Verde y Pista de Meta (Aterrizaje extendido hacia adelante)
+      // Cuadrados que dibujan la base y pista final en la meta
       svgHTML += `<rect x="${TRACK_LENGTH - 2000}" y="${svgHeight - runwayY_px}" width="4000" height="2000" fill="#6BBF4E" />`;
       svgHTML += `<rect x="${TRACK_LENGTH - 2000}" y="${svgHeight - runwayY_px}" width="4000" height="25" fill="#555555" />`;
       svgHTML += `<line x1="${TRACK_LENGTH - 2000}" y1="${svgHeight - runwayY_px + 12}" x2="${TRACK_LENGTH + 2000}" y2="${svgHeight - runwayY_px + 12}" stroke="#FFFFFF" stroke-width="4" stroke-dasharray="40, 60" />`;
@@ -658,100 +696,98 @@
       track.insertAdjacentHTML('beforeend', svgHTML);
     }
 
-    // --- GENERAR CHARCOS ---
+    // --- GENERAR CHARCOS TRAMPA ---
+    // Reparte charcos de agua a lo largo del mapa si es tren o coche.
     puddlesData = [];
     puddlesHit = [];
     if (currentMode === 'coche' || currentMode === 'tren') {
         for (let px = 2000; px < TRACK_LENGTH - 2000; px += 400 + Math.random() * 800) {
-            if (Math.random() > 0.5) { // 50% de probabilidad de generar un charco en este punto
+            if (Math.random() > 0.5) { // 50% de probabilidad
                 puddlesData.push(px);
                 const th = getTerrainHeight(px);
                 const puddle = document.createElement('div');
                 puddle.className = 'puddle';
                 puddle.style.left = px + 'px';
-                puddle.style.bottom = (baseY_px + th - 15) + 'px';
+                puddle.style.bottom = (baseY_px + th - 15) + 'px'; // Ubicado a la altura exacta de esa colina
                 track.appendChild(puddle);
             }
         }
     }
 
-    // Altura dinámica para las banderas de inicio/meta
+    // --- LÍNEAS DE INICIO Y META ---
     let lineBottomPos = cfg.bottomPos;
-    if (currentMode === 'avion') lineBottomPos = '20%'; // Banderas en la pista para el avión
+    if (currentMode === 'avion') lineBottomPos = '20%'; // Obliga al avión a tener sus banderas en su pista terrestre
 
-    // 1. Línea de Inicio
     const start = document.createElement('div');
     start.className = 'start-line';
     start.style.left = '0px';
     start.style.bottom = lineBottomPos;
     track.appendChild(start);
 
-    // 2. Línea de Meta
     const finish = document.createElement('div');
     finish.className = 'finish-line';
     finish.style.left = TRACK_LENGTH + 'px';
     finish.style.bottom = lineBottomPos;
     track.appendChild(finish);
 
-    // 3. Marcadores de Regresiva (del 10 al 1 distribuidos equitativamente)
+    // --- CARTELES DE CUENTA REGRESIVA ---
+    // Coloca señales con números del 10 al 1 dividiendo la pista en 11 partes iguales.
     for (let i = 1; i <= 10; i++) {
         const marker = document.createElement('div');
         marker.className = 'track-marker';
-        marker.innerText = (11 - i); // Etiqueta: 10 descendiendo a 1
+        marker.innerText = (11 - i); 
         
-        // Calcular posición en porcentaje (dividido en 11 segmentos para poner 10 en medio)
         const progressPct = i * (100 / 11); 
         const markerX = TRACK_LENGTH * (progressPct / 100);
         marker.style.left = markerX + 'px';
-        marker.style.bottom = (baseY_px + getTerrainHeight(markerX) + 35) + 'px'; // Ajuste al terreno
+        marker.style.bottom = (baseY_px + getTerrainHeight(markerX) + 35) + 'px';
         track.appendChild(marker);
     }
 
-    // 4. Elementos Decorativos Aleatorios
+    // --- ELEMENTOS DECORATIVOS ---
+    // Pone arbolitos, vacas, estrellas o peces (dependiendo del modo) repartidos por todo el recorrido.
     const items = cfg.decor;
-    const numDecor = 80; // Cantidad de decoraciones a generar
+    const numDecor = 80; 
     
     for (let i = 0; i < numDecor; i++) {
         const el = document.createElement('div');
         el.className = 'track-decor';
         el.innerText = items[Math.floor(Math.random() * items.length)];
         
-        // Posición aleatoria evitando que tapen las líneas de inicio y meta
         const pos = 600 + Math.random() * (TRACK_LENGTH - 1200);
         el.style.left = pos + 'px';
         
-        // Dispersión vertical
         let vOffset = (Math.random() - 0.5) * 60; 
-        if (currentMode === 'avion') {
-            vOffset = (Math.random() - 0.4) * 300; // El avión tiene más espacio aéreo
-        }
+        if (currentMode === 'avion') vOffset = (Math.random() - 0.4) * 300; // El avión necesita las nubes más esparcidas
         
-        el.style.bottom = (baseY_px + getTerrainHeight(pos) + vOffset) + 'px'; // Ajuste al terreno
+        el.style.bottom = (baseY_px + getTerrainHeight(pos) + vOffset) + 'px';
         
-        // Escala y Profundidad aleatorias
         const scale = 0.6 + Math.random() * 1.2;
         el.style.transform = `translateX(-50%) scale(${scale})`;
-        el.style.zIndex = Math.random() > 0.5 ? 20 : 35; // Frente o detrás del jugador
+        el.style.zIndex = Math.random() > 0.5 ? 20 : 35; // Profundidad: algunos delante, otros detrás del jugador
         
         track.appendChild(el);
     }
   }
 
+  // --- 6.7 INICIAR PARTIDA NUEVA ---
+  // Resetea todas las variables y prepara el nivel.
   function startGame() {
     const env = document.getElementById('environment');
     const player = document.getElementById('player');
     const cfg = config[currentMode];
 
+    // Colorea la interfaz
     env.style.background = cfg.envColor;
     env.style.borderTopColor = cfg.borderColor;
     player.style.bottom = cfg.bottomPos;
     player.style.setProperty('--facing', '1');
 
-    // Siempre carga los sprites locales por defecto
+    // Asigna el sprite (imagen) del vehículo elegido
     player.innerHTML = '';
     player.style.backgroundImage = `url('sprites/${currentMode}.png')`;
 
-    // Generar semillas aleatorias para el terreno
+    // Crea nuevos valores para que las colinas sean diferentes en cada partida
     terrainSeeds = {
       a1: 30 + Math.random() * 50,
       f1: 500 + Math.random() * 500,
@@ -761,22 +797,17 @@
       f3: 100 + Math.random() * 100
     };
 
-    // Configurar Motor de Gravedad inicial
+    // Prepara posición inicial
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
-    
-    if (currentMode === 'avion') {
-      yPos = (20 / 100) * window.innerHeight; // Fuerza inicio en la pista
-    } else {
-      yPos = baseY_px;
-    }
-    
+    yPos = (currentMode === 'avion') ? (20 / 100) * window.innerHeight : baseY_px;
     ySpeed = 0;
+    
     player.style.bottom = yPos + 'px';
     player.style.opacity = '1';
 
-    // Generar nuevo nivel
-    generateTrack();
+    generateTrack(); // Construye el mundo físico
 
+    // Reinicia relojes y métricas
     progress = 0;
     speed = 0;
     distanceScrolled = 0;
@@ -786,17 +817,18 @@
     startTime = Date.now();
     isRunning = true;
 
+    // Cambia de pantalla
     document.getElementById('home-screen').classList.remove('active');
     document.getElementById('game-screen').classList.add('active');
 
-    gameLoop();
+    gameLoop(); // ¡Enciende el motor principal!
   }
 
-  // --- CONTROLES TÁCTILES ---
+  // --- 6.8 SISTEMA DE CONTROLES TÁCTILES ---
   const gameScreen = document.getElementById('game-screen');
-  
   const hideHints = () => { document.getElementById('game-hints').style.opacity = '0'; };
 
+  // Cuando el dedo TOCA la pantalla
   gameScreen.addEventListener('pointerdown', (e) => {
     if (!isRunning || e.target.id === 'back-btn') return;
     isTouching = true;
@@ -805,9 +837,10 @@
     touchY = e.clientY;
     lastTouchY = e.clientY;
     lastTouchTime = Date.now();
-    hideHints();
+    hideHints(); // Oculta las instrucciones
   });
 
+  // Cuando el dedo SE MUEVE por la pantalla (Deslizamiento/Swipe)
   gameScreen.addEventListener('pointermove', (e) => {
     if (!isRunning || !isTouching) return;
     const now = Date.now();
@@ -815,15 +848,15 @@
     touchX = e.clientX;
     touchY = e.clientY;
     
+    // Calcula la velocidad del dedo para trasladarla al vehículo
     if (dt > 0) {
       const swipeVelocityX = (touchX - lastTouchX) / dt;
-      speed += swipeVelocityX * 6; // Sensibilidad del acelerón horizontal
+      speed += swipeVelocityX * 6; // Empuje de velocidad horizontal
       
-      // Físicas Verticales (Swipe arriba/abajo)
-      const swipeVelocityY = (lastTouchY - touchY) / dt; // Positivo es hacia ARRIBA
-      if (currentMode !== 'tren') {
+      const swipeVelocityY = (lastTouchY - touchY) / dt; // Empuje vertical
+      if (currentMode !== 'tren') { // El tren no puede brincar
         let clampedY = Math.max(-15, Math.min(15, swipeVelocityY));
-        ySpeed += clampedY * 1.5; // Fuerza del salto o inmersión
+        ySpeed += clampedY * 1.5;
       }
     }
     
@@ -832,11 +865,13 @@
     lastTouchTime = now;
   });
 
+  // Cuando el dedo DEJA DE TOCAR la pantalla
   const endTouch = () => { isTouching = false; };
   gameScreen.addEventListener('pointerup', endTouch);
   gameScreen.addEventListener('pointercancel', endTouch);
   gameScreen.addEventListener('pointerleave', endTouch);
 
+  // --- EFECTOS VISUALES (Partículas) ---
   function spawnParticle(direction) {
     const cfg = config[currentMode];
     const c = cfg ? cfg.particleColors : ['#FFD93D'];
@@ -844,9 +879,10 @@
     const playerRect = document.getElementById('player').getBoundingClientRect();
     
     p.className = 'particle';
-    p.style.background = c[Math.floor(Math.random() * c.length)];
+    p.style.background = c[Math.floor(Math.random() * c.length)]; // Color al azar según configuración
     p.style.width = p.style.height = (8 + Math.random() * 6) + 'px';
     
+    // Las dispara detrás del vehículo dando sensación de humo o escape
     const offset = direction > 0 ? -25 : 25;
     const leftOffset = playerRect.left + (playerRect.width / 2) + offset + (Math.random() * 20 - 10);
     const bottomOffset = window.innerHeight - playerRect.bottom + (Math.random() * 20);
@@ -855,52 +891,61 @@
     p.style.bottom = bottomOffset + 'px';
     
     document.getElementById('game-screen').appendChild(p);
-    setTimeout(() => p.remove(), 1000);
+    setTimeout(() => p.remove(), 1000); // Las borra de la memoria al terminar
   }
 
-  // --- BUCLE PRINCIPAL ---
+  /* =========================================================================
+     7. EL BUCLE PRINCIPAL (GAME LOOP)
+     Esta función se ejecuta unas 60 veces por segundo. 
+     Actualiza posiciones, velocidades, gravedades y dibuja todo en pantalla.
+     Es el verdadero corazón de la aplicación.
+     ========================================================================= */
   function gameLoop() {
     if (!isRunning) return;
 
     let targetSpeed = 0;
     const screenCenter = window.innerWidth / 2;
 
+    // --- LÓGICA DE VELOCIDAD HORIZONTAL ---
     if (isTouching) {
+      // Si tocas la mitad derecha vas hacia adelante, mitad izquierda hacia atrás
       targetSpeed = (touchX > screenCenter) ? mediumSpeed : -mediumSpeed;
       if (targetSpeed > 0 && speed < targetSpeed) speed += 0.5;
       if (targetSpeed < 0 && speed > targetSpeed) speed -= 0.5;
     }
 
-    speed *= 0.93; // Fricción
+    speed *= 0.93; // Fricción natural para que no resbale infinitamente
     if (speed > maxSpeed) speed = maxSpeed;
     if (speed < -maxSpeed) speed = -maxSpeed;
     
-    // Nueva lógica de detención o auto-avance
+    // Detención automática
     if (!isTouching) {
       if (currentMode === 'avion') {
-        // El avión no puede detenerse: propulsión automática hacia adelante
-        if (speed < mediumSpeed) speed += 0.2;
+        if (speed < mediumSpeed) speed += 0.2; // El avión siempre tiene empuje
       } else if (Math.abs(speed) < 0.2) {
-        speed = 0; // Los demás vehículos se detienen
+        speed = 0; // Se frena totalmente si iba muy lento
       }
     }
 
-    // Progresión 10 veces más lenta que antes (0.005 vs 0.05) para un juego más largo
+    // Aumentamos o disminuimos el progreso % total
     progress += speed * 0.005; 
     if (progress < 0) progress = 0; 
     
-    // --- CÁLCULO DE TERRENO ACTUAL ---
+    // Calculamos qué parte exacta del mundo estamos pisando
     let playerWorldX = (progress / 100) * TRACK_LENGTH;
     let currentTerrainH = getTerrainHeight(playerWorldX);
     let dynamicBaseY_px = baseY_px + currentTerrainH;
 
-    // --- INTERACCIÓN CON CHARCOS ---
+    // --- INTERACCIÓN CON CHARCOS DE AGUA ---
+    // Si estamos tocando el piso y el vehículo es de tierra...
     if ((currentMode === 'coche' || currentMode === 'tren') && Math.abs(yPos - dynamicBaseY_px) < 15) {
       puddlesData.forEach((px, i) => {
+        // ¿Estamos pisando las coordenadas del charco?
         if (!puddlesHit.includes(i) && Math.abs(playerWorldX - px) < 70) {
           puddlesHit.push(i);
-          speed *= 0.65; // Salpicar el agua te frena un poco
-          // Partículas de salpicadura de agua
+          speed *= 0.65; // Ralentización por el agua (Castigo)
+          
+          // Efecto de salpicadura visual
           for(let j=0; j<8; j++) {
             const p = document.createElement('div');
             p.className = 'particle';
@@ -915,130 +960,139 @@
       });
     }
     
-    // --- MOTOR DE GRAVEDAD Y FÍSICA VERTICAL ---
+    // --- LÓGICA DE FÍSICA VERTICAL (GRAVEDAD, FLOTABILIDAD Y VUELO) ---
     yPos += ySpeed;
 
     if (currentMode === 'coche') {
-      let currentGravity = isTouching ? gravity * 0.15 : gravity; // Flota si se sostiene en el aire
+      let currentGravity = isTouching ? gravity * 0.15 : gravity; // Efecto "flotar" si dejas el dedo
       ySpeed -= currentGravity;
-      if (yPos <= dynamicBaseY_px) {
+      if (yPos <= dynamicBaseY_px) { // Choca contra la colina
         yPos = dynamicBaseY_px;
-        if (ySpeed < -3) ySpeed = Math.abs(ySpeed) * 0.3; // Bote contra el piso
+        if (ySpeed < -3) ySpeed = Math.abs(ySpeed) * 0.3; // Pequeño rebote
         else ySpeed = 0;
       }
     } else if (currentMode === 'tren') {
-      yPos = dynamicBaseY_px; // Tren 100% pegado a sus rieles
+      yPos = dynamicBaseY_px; // El tren NUNCA se despega de las vías
       ySpeed = 0;
     } else if (currentMode === 'barco') {
+      // Física compleja de flotabilidad en el agua
       if (yPos > baseY_px) {
-        // En el aire (brincando)
         let currentGravity = isTouching ? gravity * 0.2 : gravity;
-        ySpeed -= currentGravity;
+        ySpeed -= currentGravity; // Cae en el aire
       } else if (yPos < baseY_px) {
-        // Sumergido debajo del agua
         let buoyancy = isTouching ? gravity * 0.1 : gravity * 0.5;
-        ySpeed += buoyancy; // El agua lo empuja a flotar
-        ySpeed *= 0.92; // Fricción del agua
+        ySpeed += buoyancy; // Flota hacia arriba si está sumergido
+        ySpeed *= 0.92;
       } else {
-        ySpeed *= 0.8; // Fricción suave en la superficie
+        ySpeed *= 0.8;
       }
-      // Opacidad para hacer el efecto de inmersión más realista
+      // Se hunde un poquito visualmente
       document.getElementById('player').style.opacity = yPos < baseY_px - 10 ? '0.7' : '1';
+    
     } else if (currentMode === 'avion') {
+      // Cinemáticas automáticas y vuelo guiado
       let runwayY_px = (20 / 100) * window.innerHeight;
       let cruiseY_px = baseY_px;
-      const transitionDist = 2000; // 2000px es la longitud de las pistas
+      const transitionDist = 2000;
 
       if (playerWorldX < transitionDist) {
-        // ANIMACIÓN DE DESPEGUE AUTOMÁTICO
-        let p = playerWorldX / transitionDist; // Porcentaje de 0 a 1
-        let ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // Suavizado
+        // Despegando en la pista inicial
+        let p = playerWorldX / transitionDist;
+        let ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
         yPos = runwayY_px + (cruiseY_px - runwayY_px) * ease;
         ySpeed = 0;
-        if (speed < mediumSpeed) speed += 0.2; // Acelera por la pista
+        if (speed < mediumSpeed) speed += 0.2;
       } else if (playerWorldX > TRACK_LENGTH - transitionDist) {
-        // ANIMACIÓN DE ATERRIZAJE AUTOMÁTICO
+        // Aterrizando en la pista final
         let p = (playerWorldX - (TRACK_LENGTH - transitionDist)) / transitionDist;
         let ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
         yPos = cruiseY_px - (cruiseY_px - runwayY_px) * ease;
         ySpeed = 0;
-        if (speed < mediumSpeed) speed += 0.2; // Fuerza velocidad para asegurar llegada a la meta
+        if (speed < mediumSpeed) speed += 0.2; 
       } else {
-        // Vuelo estable guiado por el jugador
-        ySpeed *= 0.92; // Resistencia aerodinámica frena el impulso vertical suavemente
+        // Vuelo libre en el centro del nivel
+        ySpeed *= 0.92;
         if (yPos < baseY_px * 0.3) {
-          yPos = baseY_px * 0.3; // Altura mínima de vuelo
+          yPos = baseY_px * 0.3; // No permite chocar con el agua
           if (ySpeed < 0) ySpeed = 0;
         }
       }
     }
 
-    // Límite superior (techo) de la pantalla para TODOS los transportes
-    const maxVisibleHeight = window.innerHeight - 100; // 100px es el tamaño del jugador
+    // Límite de cielo (Techo de cristal)
+    const maxVisibleHeight = window.innerHeight - 100;
     if (yPos > maxVisibleHeight) {
       yPos = maxVisibleHeight;
-      if (ySpeed > 0) ySpeed = 0; // Detiene el ascenso brusco al tocar el techo
+      if (ySpeed > 0) ySpeed = 0;
     }
 
-    // Limitar velocidad vertical extrema
+    // Limitador de seguridad para evitar salir volando a millones de KM/H
     if (ySpeed > 25) ySpeed = 25;
     if (ySpeed < -25) ySpeed = -25;
 
-    // Inclinación del transporte basada en la pendiente del terreno
+    // --- CÁLCULO DE INCLINACIÓN (ROTACIÓN VISUAL) ---
     let rotationAngle = 0;
     if (currentMode === 'coche' || currentMode === 'tren') {
+      // Trigonometría (arco tangente) calculando el desnivel del terreno frente al coche
       const th1 = currentTerrainH;
-      const th2 = getTerrainHeight(playerWorldX + 20); // Mirar un poco adelante
+      const th2 = getTerrainHeight(playerWorldX + 20); 
       rotationAngle = Math.atan2(th2 - th1, 20) * (180 / Math.PI);
     } else if (currentMode === 'avion') {
       const tDist = 2000;
       if (playerWorldX < tDist) {
         let p = playerWorldX / tDist;
-        rotationAngle = 15 * Math.sin(p * Math.PI); // Levanta la trompa al despegar
+        rotationAngle = 15 * Math.sin(p * Math.PI); // Empinar nariz en despegue
       } else if (playerWorldX > TRACK_LENGTH - tDist) {
         let p = (playerWorldX - (TRACK_LENGTH - tDist)) / tDist;
-        rotationAngle = -10 * Math.sin(p * Math.PI); // Baja levemente la trompa (flare de aterrizaje)
+        rotationAngle = -10 * Math.sin(p * Math.PI); // Bajar nariz en aterrizaje
       } else {
-        rotationAngle = ySpeed * 1.5; // Inclinación dinámica al deslizar arriba/abajo en pleno vuelo
+        rotationAngle = ySpeed * 1.5; // Inclinarse si el dedo lo manda arriba o abajo
       }
     } else if (currentMode === 'barco') {
-      rotationAngle = ySpeed * 1.5; // Inclinación natural al rebotar en el agua
+      rotationAngle = ySpeed * 1.5; // Cabeceo por el oleaje
     }
 
-    // Volteo visual e inclinación del jugador
+    // --- RENDERIZADO VISUAL AL NAVEGADOR ---
     const player = document.getElementById('player');
+    
+    // ¿A dónde mira? (Voltear sprite)
     const facing = speed < -0.5 ? -1 : (speed > 0.5 ? 1 : player.style.getPropertyValue('--facing') || 1);
     player.style.setProperty('--facing', facing);
     
-    // Aplicar Posición, Inclinación y Dirección
+    // Aplica finalmente la posición CSS y la rotación
     player.style.bottom = yPos + 'px';
     player.style.transform = `translateX(-50%) rotate(${-rotationAngle}deg) scaleX(var(--facing))`;
     // -------------------------------------------
 
+    // ¿Ya ganamos?
     if (progress >= 100) {
       progress = 100;
       winGame();
     }
     
+    // Actualizar barra naranja de progreso
     document.getElementById('progress-fill').style.width = progress + '%';
 
-    // Movimiento visual de la pista (calculado en base al progreso real y longitud)
+    // Desplazar el mapa hacia atrás para dar efecto de avance
     const trackX = screenCenter - (progress / 100) * TRACK_LENGTH;
     document.getElementById('track').style.transform = `translateX(${trackX}px)`;
 
-    // Movimiento infinito del piso de fondo
+    // Efecto Parallax en las montañitas del fondo
     distanceScrolled += speed * 2;
     const bgPos = ((distanceScrolled % window.innerWidth) + window.innerWidth) % window.innerWidth;
     document.getElementById('scenery').style.transform = `translateX(-${bgPos}px)`;
 
-    // Partículas de alta velocidad
+    // Generar partículas de alta velocidad si vamos rápido
     if (Math.abs(speed) > mediumSpeed * 1.5 && Math.random() > 0.6) {
       spawnParticle(Math.sign(speed));
     }
 
+    // Le pide al navegador ejecutar esta misma función en el próximo frame visual (ej. 60fps)
     gameLoopReq = requestAnimationFrame(gameLoop);
   }
 
+  // --- 6.9 FIN DEL JUEGO (VICTORIA) ---
+  // Calcula el tiempo, lo imprime y muestra el menú de ganar.
   function winGame() {
     isRunning = false;
     const timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -1047,7 +1101,7 @@
     setTimeout(() => {
       document.getElementById('game-screen').classList.remove('active');
       document.getElementById('win-screen').classList.add('active');
-    }, 500);
+    }, 500); // Pequeña pausa dramática de medio segundo
   }
 
 </script>
