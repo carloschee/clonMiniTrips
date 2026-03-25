@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mini Trips">
-<!-- CORRECCIÓN: El color de tema inicial ahora es el crema del menú -->
-<meta name="theme-color" id="theme-meta" content="#FFF8EC">
+<!-- CORRECCIÓN: El color de tema inicial ahora es blanco para coincidir con la cima de la aurora -->
+<meta name="theme-color" id="theme-meta" content="#ffffff">
 
 <title>Mini Trips!</title>
 
@@ -27,14 +27,11 @@
     --sky-bottom: #BBE3FA;
     --sunset-top: #FF9A9E;
     --sunset-bottom: #FECFEF;
-    --ui-bg: #FFF8EC;
     --ui-shadow: rgba(0,0,0,0.18);
     
     /* Botones */
     --btn-green: #5DD15A;
-    --btn-green-dark: #3FAD3C;
     --btn-orange: #FF8A3D;
-    --btn-orange-dark: #E06820;
     --btn-blue: #4FC3F7;
     --btn-blue-dark: #29B6F6;
   }
@@ -54,11 +51,10 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    min-height: 100dvh; /* CORRECCIÓN: Asegura que cubra pantallas móviles modernas */
+    min-height: 100dvh;
     overflow: hidden;
     font-family: 'Nunito', sans-serif;
-    /* CORRECCIÓN: Fondo crema base para evitar rectángulos azules en los bordes */
-    background-color: var(--ui-bg); 
+    background-color: #ffffff; /* Ajustado al tope de la aurora */
     transition: background-color 0.5s ease;
     touch-action: none;
   }
@@ -70,7 +66,43 @@
   }
 
   /* =========================================================================
-     4. GESTOR DE PANTALLAS Y UI
+     4. PANTALLA DE PRECARGA
+     ========================================================================= */
+  #preloader {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 8px solid var(--sky-bottom);
+    border-top-color: var(--btn-orange);
+    border-radius: 50%;
+    animation: spin 1s infinite linear;
+    margin-bottom: 20px;
+  }
+
+  #preloader p {
+    font-family: 'Fredoka One', cursive;
+    color: var(--btn-orange);
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  @keyframes spin { 
+    100% { transform: rotate(360deg); } 
+  }
+
+  /* =========================================================================
+     5. GESTOR DE PANTALLAS Y UI
      ========================================================================= */
   .screen {
     position: absolute;
@@ -78,7 +110,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    min-height: 100dvh; /* Asegura cubrir todo el alto real */
+    min-height: 100dvh;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -91,14 +123,50 @@
     display: flex;
   }
 
-  /* --- INICIO --- */
+  /* --- INICIO (Fondo Aurora Boreal) --- */
   #home-screen {
     justify-content: center;
     gap: clamp(10px, 4vh, 30px);
-    background: var(--ui-bg);
     padding-left: max(20px, env(safe-area-inset-left));
     padding-right: max(20px, env(safe-area-inset-right));
     flex-direction: column !important;
+    
+    /* Fondo Aurora */
+    background: linear-gradient(
+        to bottom,
+        #fff 0%,
+        #fff 40%,
+        rgba(255, 255, 255, 0) 100%
+      ),
+      linear-gradient(to right, #0ed2da, #5f29c7);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Grid del fondo Aurora */
+  #home-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(90deg, #ccc 1px, transparent 1px);
+    background-size: 50px 100%;
+    pointer-events: none;
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    z-index: 0;
+  }
+
+  /* Aseguramos que los elementos del menú estén por encima de la cuadrícula */
+  #home-screen > * {
+    z-index: 1;
   }
   
   .title-card {
@@ -161,7 +229,7 @@
   }
 
   /* =========================================================================
-     5. JUEGO Y SISTEMA PARALLAX
+     6. JUEGO Y SISTEMA PARALLAX
      ========================================================================= */
   #game-screen {
     justify-content: space-between;
@@ -406,7 +474,13 @@
 </head>
 <body>
 
-  <!-- PANTALLA INICIO -->
+  <!-- PANTALLA DE PRECARGA -->
+  <div id="preloader">
+    <div class="spinner"></div>
+    <p>Cargando viajes...</p>
+  </div>
+
+  <!-- PANTALLA INICIO (AURORA BOREAL) -->
   <div id="home-screen" class="screen active">
     <div class="title-card">
       <h1>Mini Trips!</h1>
@@ -452,7 +526,52 @@
   </div>
 
 <script>
-  // --- VARIABLES GLOBALES ---
+  // =========================================================================
+  // LOGICA DE PRECARGA DE SPRITES
+  // =========================================================================
+  const assetsToLoad = [
+    'sprites/coche.png',
+    'sprites/tren.png',
+    'sprites/barco.png',
+    'sprites/avion.png'
+  ];
+  let loadedAssetsCount = 0;
+
+  function onAssetLoaded() {
+    loadedAssetsCount++;
+    if (loadedAssetsCount >= assetsToLoad.length) {
+      hidePreloader();
+    }
+  }
+
+  function hidePreloader() {
+    const preloader = document.getElementById('preloader');
+    preloader.style.opacity = '0';
+    preloader.style.visibility = 'hidden';
+    setTimeout(() => {
+      preloader.style.display = 'none';
+    }, 500);
+  }
+
+  // Iniciar precarga de imágenes
+  assetsToLoad.forEach(src => {
+    const img = new Image();
+    img.onload = onAssetLoaded;
+    img.onerror = onAssetLoaded; // Evita que se quede bloqueado si una ruta falla
+    img.src = src;
+  });
+
+  // Redundancia: ocultar preloader si el onload del documento dispara primero
+  window.addEventListener('load', () => {
+    if (loadedAssetsCount < assetsToLoad.length) {
+      hidePreloader();
+    }
+  });
+
+
+  // =========================================================================
+  // VARIABLES GLOBALES DEL JUEGO
+  // =========================================================================
   let currentMode = 'coche';
   let isRunning = false;
   let progress = 0;
@@ -482,7 +601,9 @@
   let terrainSeedsBg = null; 
   const TRACK_LENGTH = 20000; 
 
-  // --- CONFIGURACIÓN DE MODOS ---
+  // =========================================================================
+  // CONFIGURACIÓN DE MODOS
+  // =========================================================================
   const config = {
     coche: { 
       spriteUrl: 'sprites/coche.png', bottomPos: '25%',
@@ -522,7 +643,9 @@
     }
   };
 
-  // --- MATEMÁTICAS DEL TERRENO ---
+  // =========================================================================
+  // MATEMÁTICAS DEL TERRENO
+  // =========================================================================
   function getTerrainHeight(x, seeds) {
     if (!seeds) return 0;
     if (x <= 0 || x >= TRACK_LENGTH) return 0;
@@ -538,7 +661,9 @@
     return (h1 + h2 + h3) * fade;
   }
 
-  // --- LÓGICA DEL MENÚ ---
+  // =========================================================================
+  // LÓGICA DEL MENÚ
+  // =========================================================================
   function selectMode(mode) {
     currentMode = mode;
     startGame();
@@ -548,11 +673,10 @@
     isRunning = false;
     cancelAnimationFrame(gameLoopReq);
     
-    // CORRECCIÓN: Volver al tema crema para evitar franjas azules
-    document.getElementById('theme-meta').setAttribute('content', '#FFF8EC');
-    document.body.style.backgroundColor = 'var(--ui-bg)';
+    // Regresamos el color de la barra del navegador a blanco, como el inicio del fondo aurora
+    document.getElementById('theme-meta').setAttribute('content', '#ffffff');
+    document.body.style.backgroundColor = '#ffffff';
     
-    // Limpiar efectos de victoria
     document.querySelectorAll('.confetti').forEach(el => el.remove());
     document.getElementById('win-glow').classList.remove('active');
     document.getElementById('game-header').style.opacity = '1';
@@ -566,7 +690,9 @@
 
   document.getElementById('back-btn').addEventListener('pointerdown', goHome);
 
-  // --- GENERACIÓN DEL MUNDO (PARALLAX Y TERRENO) ---
+  // =========================================================================
+  // GENERACIÓN DEL MUNDO
+  // =========================================================================
   function generateTrack() {
     const track = document.getElementById('track');
     const midLayer = document.getElementById('parallax-mid');
@@ -734,7 +860,7 @@
 
     player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
-    // CORRECCIÓN: Actualiza el color del sistema al color del cielo del nivel
+    // Cambia el color del sistema a la parte alta del cielo del nivel
     document.getElementById('theme-meta').setAttribute('content', cfg.skyTop);
     document.body.style.backgroundColor = cfg.skyTop;
 
@@ -767,7 +893,9 @@
     gameLoop();
   }
 
-  // --- CONTROLES TÁCTILES ---
+  // =========================================================================
+  // CONTROLES TÁCTILES
+  // =========================================================================
   const gameScreen = document.getElementById('game-screen');
   gameScreen.addEventListener('pointerdown', (e) => {
     if (!isRunning || e.target.id === 'back-btn') return;
@@ -822,7 +950,9 @@
     setTimeout(() => p.remove(), 1000);
   }
 
-  // --- BUCLE PRINCIPAL (FÍSICA Y PARALLAX) ---
+  // =========================================================================
+  // BUCLE PRINCIPAL
+  // =========================================================================
   function gameLoop() {
     if (!isRunning) return;
 
@@ -859,7 +989,6 @@
     
     let playerWorldX = (progress / 100) * TRACK_LENGTH;
     
-    // --- LÓGICA DEL AGUA ---
     if (currentMode === 'barco' || currentMode === 'avion') {
       let time = Date.now();
       let waveTime = time * 0.002;
@@ -902,7 +1031,6 @@
 
     yPos += ySpeed;
 
-    // --- FÍSICA Y ALTURAS POR MODO ---
     if (currentMode === 'coche') {
       let currentGravity = isTouching ? gravity * 0.15 : gravity;
       ySpeed -= currentGravity;
@@ -963,7 +1091,6 @@
       if (ySpeed > 0) ySpeed = 0;
     }
     
-    // --- ROTACIÓN ---
     if (currentMode === 'coche' || currentMode === 'tren') {
       const th1 = getTerrainHeight(playerWorldX, terrainSeeds);
       const th2 = getTerrainHeight(playerWorldX + 20, terrainSeeds); 
@@ -986,7 +1113,6 @@
       }
     }
 
-    // --- RENDERIZADO DEL SPRITE ---
     const player = document.getElementById('player');
     const currentFacing = parseFloat(player.style.getPropertyValue('--facing') || -1);
     const newFacing = speed > 0.5 ? 1 : (speed < -0.5 ? -1 : currentFacing);
@@ -1009,7 +1135,9 @@
     gameLoopReq = requestAnimationFrame(gameLoop);
   }
 
-  // --- SECUENCIA DE TRIUNFO ---
+  // =========================================================================
+  // SECUENCIA DE TRIUNFO
+  // =========================================================================
   function winGame() {
     isRunning = false; 
     document.getElementById('game-hints').style.opacity = '0';
