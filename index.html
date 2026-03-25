@@ -10,7 +10,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mini Trips">
-<!-- CORRECCIÓN: El color de tema inicial ahora es blanco para coincidir con la cima de la aurora -->
 <meta name="theme-color" id="theme-meta" content="#ffffff">
 
 <title>Mini Trips!</title>
@@ -54,7 +53,7 @@
     min-height: 100dvh;
     overflow: hidden;
     font-family: 'Nunito', sans-serif;
-    background-color: #ffffff; /* Ajustado al tope de la aurora */
+    background-color: #ffffff;
     transition: background-color 0.5s ease;
     touch-action: none;
   }
@@ -164,7 +163,6 @@
     z-index: 0;
   }
 
-  /* Aseguramos que los elementos del menú estén por encima de la cuadrícula */
   #home-screen > * {
     z-index: 1;
   }
@@ -319,16 +317,6 @@
     box-shadow: 3px 0 10px rgba(0,0,0,0.2);
     border-radius: 5px 5px 0 0;
   }
-  
-  .start-line::after {
-    content: 'INICIO';
-    position: absolute;
-    bottom: 150px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 2.2rem;
-    color: white;
-    text-shadow: 0 4px 0 rgba(0,0,0,0.3), 0 0 15px var(--btn-green);
-  }
 
   .finish-line::after {
     content: 'META';
@@ -392,20 +380,6 @@
     background-position: center bottom;
     background-repeat: no-repeat;
     filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.35));
-  }
-
-  .instructions {
-    position: absolute;
-    top: 35%;
-    width: 100%;
-    text-align: center;
-    color: rgba(255,255,255,0.9);
-    font-weight: 900;
-    font-size: 1.4rem;
-    pointer-events: none;
-    z-index: 40;
-    text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-    transition: opacity 0.3s;
   }
 
   .particle {
@@ -519,10 +493,6 @@
     <div id="win-glow"></div>
 
     <div id="player"></div>
-
-    <div class="instructions" id="game-hints">
-      Mantén presionado para acelerar.<br>¡Desliza a los lados!
-    </div>
   </div>
 
 <script>
@@ -553,15 +523,13 @@
     }, 500);
   }
 
-  // Iniciar precarga de imágenes
   assetsToLoad.forEach(src => {
     const img = new Image();
     img.onload = onAssetLoaded;
-    img.onerror = onAssetLoaded; // Evita que se quede bloqueado si una ruta falla
+    img.onerror = onAssetLoaded;
     img.src = src;
   });
 
-  // Redundancia: ocultar preloader si el onload del documento dispara primero
   window.addEventListener('load', () => {
     if (loadedAssetsCount < assetsToLoad.length) {
       hidePreloader();
@@ -673,7 +641,6 @@
     isRunning = false;
     cancelAnimationFrame(gameLoopReq);
     
-    // Regresamos el color de la barra del navegador a blanco, como el inicio del fondo aurora
     document.getElementById('theme-meta').setAttribute('content', '#ffffff');
     document.body.style.backgroundColor = '#ffffff';
     
@@ -860,7 +827,6 @@
 
     player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
-    // Cambia el color del sistema a la parte alta del cielo del nivel
     document.getElementById('theme-meta').setAttribute('content', cfg.skyTop);
     document.body.style.backgroundColor = cfg.skyTop;
 
@@ -884,7 +850,6 @@
 
     progress = 0; speed = 0; isTouching = false;
     document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('game-hints').style.opacity = '1';
     isRunning = true;
 
     document.getElementById('home-screen').classList.remove('active');
@@ -903,7 +868,6 @@
     touchX = e.clientX; lastTouchX = e.clientX;
     touchY = e.clientY; lastTouchY = e.clientY;
     lastTouchTime = Date.now();
-    document.getElementById('game-hints').style.opacity = '0';
   });
 
   gameScreen.addEventListener('pointermove', (e) => {
@@ -1140,7 +1104,6 @@
   // =========================================================================
   function winGame() {
     isRunning = false; 
-    document.getElementById('game-hints').style.opacity = '0';
     document.getElementById('game-header').style.opacity = '0'; 
 
     const player = document.getElementById('player');
