@@ -134,8 +134,8 @@
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
     
-    /* Configuración para sprites individuales PNG */
-    background-size: 80%; /* Deja un pequeño margen dentro del botón */
+    /* Configuración para sprites individuales PNG en el menú */
+    background-size: 80%; 
     background-position: center;
     background-repeat: no-repeat;
   }
@@ -314,18 +314,18 @@
     transform: translateX(-50%) scaleX(var(--facing));
     z-index: 30;
     
-    /* Estilo "Sticker" para el sprite */
-    width: 90px;
-    height: 90px;
-    border-radius: 20px; 
-    border: 3px solid white;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-    background-color: white;
+    /* Configuración de tamaño para el sprite puro */
+    width: 100px;
+    height: 100px;
     
-    /* Configuración para PNG individual */
-    background-size: 80%;
-    background-position: center;
+    /* Fondo transparente para que el PNG se integre al paisaje */
+    background-color: transparent;
+    background-size: contain;
+    background-position: center bottom; /* Anclado abajo para que toque el piso */
     background-repeat: no-repeat;
+    
+    /* Drop-shadow hace que la sombra siga la silueta del PNG, no el cuadro */
+    filter: drop-shadow(0px 6px 4px rgba(0,0,0,0.35));
   }
 
   .instructions {
@@ -408,8 +408,8 @@
       <h1>Mini Trips!</h1>
     </div>
     <div class="mode-selector">
-      <!-- Botones enlazados a la carpeta "sprites" -->
-      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/auto.png');"></button>
+      <!-- Botones enlazados a la carpeta "sprites" usando coche.png -->
+      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
       <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
       <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
       <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')" style="background-image: url('sprites/avion.png');"></button>
@@ -484,7 +484,7 @@
   // --- CONFIGURACIÓN DE MODOS (RUTAS A SPRITES INDIVIDUALES) ---
   const config = {
     coche: { 
-      spriteUrl: 'sprites/auto.png', bottomPos: '25%',
+      spriteUrl: 'sprites/coche.png', bottomPos: '25%',
       skyTop: '#6CB2EB', skyBottom: '#BBE3FA',
       fgColor: '#6BBF4E', fgStroke: '#4E9B35', fgFill: '#5DAF42',
       bgColor: '#86CD6A', bgStroke: 'none', bgFill: '#79BC5F',     
@@ -706,7 +706,7 @@
     const player = document.getElementById('player');
     const cfg = config[currentMode];
 
-    // Asignar el fondo PNG individual al jugador
+    // Asignar el fondo PNG individual al jugador (sin estilo cuadrado)
     player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
     terrainSeeds = {
