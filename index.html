@@ -711,7 +711,13 @@
 
     // Configurar Motor de Gravedad inicial
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
-    yPos = baseY_px;
+    
+    if (currentMode === 'avion') {
+      yPos = (20 / 100) * window.innerHeight; // Fuerza inicio en la pista
+    } else {
+      yPos = baseY_px;
+    }
+    
     ySpeed = 0;
     player.style.bottom = yPos + 'px';
     player.style.opacity = '1';
@@ -887,12 +893,31 @@
       // Opacidad para hacer el efecto de inmersión más realista
       document.getElementById('player').style.opacity = yPos < baseY_px - 10 ? '0.7' : '1';
     } else if (currentMode === 'avion') {
-      // Vuelo estable: sin gravedad que lo jale hacia abajo constantemente
-      ySpeed *= 0.92; // Resistencia aerodinámica frena el impulso suavemente
-      
-      if (yPos < baseY_px * 0.3) {
-        yPos = baseY_px * 0.3; // Altura mínima de vuelo
-        if (ySpeed < 0) ySpeed = 0;
+      let runwayY_px = (20 / 100) * window.innerHeight;
+      let cruiseY_px = baseY_px;
+      const transitionDist = 2000; // 2000px es la longitud de las pistas
+
+      if (playerWorldX < transitionDist) {
+        // ANIMACIÓN DE DESPEGUE AUTOMÁTICO
+        let p = playerWorldX / transitionDist; // Porcentaje de 0 a 1
+        let ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // Suavizado
+        yPos = runwayY_px + (cruiseY_px - runwayY_px) * ease;
+        ySpeed = 0;
+        if (speed < mediumSpeed) speed += 0.2; // Acelera por la pista
+      } else if (playerWorldX > TRACK_LENGTH - transitionDist) {
+        // ANIMACIÓN DE ATERRIZAJE AUTOMÁTICO
+        let p = (playerWorldX - (TRACK_LENGTH - transitionDist)) / transitionDist;
+        let ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+        yPos = cruiseY_px - (cruiseY_px - runwayY_px) * ease;
+        ySpeed = 0;
+        if (speed < mediumSpeed) speed += 0.2; // Fuerza velocidad para asegurar llegada a la meta
+      } else {
+        // Vuelo estable guiado por el jugador
+        ySpeed *= 0.92; // Resistencia aerodinámica frena el impulso vertical suavemente
+        if (yPos < baseY_px * 0.3) {
+          yPos = baseY_px * 0.3; // Altura mínima de vuelo
+          if (ySpeed < 0) ySpeed = 0;
+        }
       }
     }
 
@@ -913,6 +938,17 @@
       const th1 = currentTerrainH;
       const th2 = getTerrainHeight(playerWorldX + 20); // Mirar un poco adelante
       rotationAngle = Math.atan2(th2 - th1, 20) * (180 / Math.PI);
+    } else if (currentMode === 'avion') {
+      const tDist = 2000;
+      if (playerWorldX < tDist) {
+        let p = playerWorldX / tDist;
+        rotationAngle = 15 * Math.sin(p * Math.PI); // Levanta la trompa al despegar
+      } else if (playerWorldX > TRACK_LENGTH - tDist) {
+        let p = (playerWorldX - (TRACK_LENGTH - tDist)) / tDist;
+        rotationAngle = -10 * Math.sin(p * Math.PI); // Baja levemente la trompa (flare de aterrizaje)
+      } else {
+        rotationAngle = ySpeed * 1.5; // Inclinación dinámica al deslizar arriba/abajo en pleno vuelo
+      }
     }
 
     // Volteo visual e inclinación del jugador
