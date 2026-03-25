@@ -631,14 +631,14 @@
     const start = document.createElement('div');
     start.className = 'start-line';
     start.style.left = '0px';
-    start.style.bottom = bottom;
+    start.style.bottom = cfg.bottomPos;
     track.appendChild(start);
 
     // 2. Línea de Meta
     const finish = document.createElement('div');
     finish.className = 'finish-line';
     finish.style.left = TRACK_LENGTH + 'px';
-    finish.style.bottom = bottom;
+    finish.style.bottom = cfg.bottomPos;
     track.appendChild(finish);
 
     // 3. Marcadores de Regresiva (del 10 al 1 distribuidos equitativamente)
