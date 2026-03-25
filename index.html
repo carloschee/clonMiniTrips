@@ -104,31 +104,33 @@
   }
 
   .mode-selector {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
     justify-content: center;
     margin-bottom: 20px;
     max-width: 90%;
   }
 
   .mode-btn {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
     border: none;
-    background: white;
-    font-size: 2.2rem;
-    box-shadow: 0 6px 0 var(--sky-bottom);
+    background-color: white;
+    background-size: 60%; /* Escala la imagen para que encaje bien en el botón */
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: 0 8px 0 var(--sky-bottom);
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: transform 0.1s, box-shadow 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .mode-btn:active, .mode-btn.selected {
-    transform: translateY(6px);
+  .mode-btn:active {
+    transform: translateY(8px);
     box-shadow: 0 0 0 var(--sky-bottom);
     border: 4px solid var(--btn-orange);
   }
@@ -149,39 +151,6 @@
   .play-btn:active {
     transform: translateY(8px);
     box-shadow: 0 0 0 var(--btn-green-dark);
-  }
-
-  /* Configuración de Sprites */
-  .sprite-config {
-    margin-top: 30px;
-    background: rgba(0,0,0,0.05);
-    padding: 15px 20px;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .sprite-config label {
-    font-weight: 800;
-    color: #555;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.1rem;
-  }
-  
-  .sprite-config input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-    accent-color: var(--btn-orange);
-  }
-
-  .sprite-hint {
-    font-size: 0.85rem;
-    color: #777;
-    text-align: center;
   }
 
   /* GAME SCREEN */
@@ -208,6 +177,7 @@
     font-weight: bold;
     font-size: 1.2rem;
     box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    order: 2; /* Mueve el botón de regreso a la derecha */
   }
   .back-btn:active { transform: translateY(4px); box-shadow: 0 0 0; }
 
@@ -219,6 +189,7 @@
     border: 3px solid white;
     overflow: hidden;
     position: relative;
+    order: 1; /* Mantiene la barra a la izquierda */
   }
 
   .progress-fill {
@@ -430,22 +401,10 @@
     </div>
 
     <div class="mode-selector">
-      <button class="mode-btn selected" data-mode="coche" onclick="selectMode('coche', this)">🚗</button>
-      <button class="mode-btn" data-mode="tren" onclick="selectMode('tren', this)">🚂</button>
-      <button class="mode-btn" data-mode="barco" onclick="selectMode('barco', this)">⛵</button>
-      <button class="mode-btn" data-mode="avion" onclick="selectMode('avion', this)">✈️</button>
-    </div>
-
-    <button class="play-btn" onclick="startGame()">¡JUGAR!</button>
-
-    <div class="sprite-config">
-      <label>
-        <input type="checkbox" id="use-sprites">
-        Usar Sprites Locales
-      </label>
-      <div class="sprite-hint">
-        (Carpeta "sprites/": coche.png, tren.png, barco.png, avion.png)
-      </div>
+      <button class="mode-btn" data-mode="coche" onclick="selectMode('coche')" style="background-image: url('sprites/coche.png');"></button>
+      <button class="mode-btn" data-mode="tren" onclick="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
+      <button class="mode-btn" data-mode="barco" onclick="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
+      <button class="mode-btn" data-mode="avion" onclick="selectMode('avion')" style="background-image: url('sprites/avion.png');"></button>
     </div>
   </div>
 
@@ -567,10 +526,9 @@
 
   // --- LÓGICA DE INTERFAZ Y PISTA ---
 
-  function selectMode(mode, btnElement) {
+  function selectMode(mode) {
     currentMode = mode;
-    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('selected'));
-    btnElement.classList.add('selected');
+    startGame(); // Inicia el recorrido automáticamente al elegir el vehículo
   }
 
   function goHome() {
@@ -650,20 +608,15 @@
     const env = document.getElementById('environment');
     const player = document.getElementById('player');
     const cfg = config[currentMode];
-    const useSprites = document.getElementById('use-sprites').checked;
 
     env.style.background = cfg.envColor;
     env.style.borderTopColor = cfg.borderColor;
     player.style.bottom = cfg.bottomPos;
     player.style.setProperty('--facing', '1');
 
-    if (useSprites) {
-      player.innerHTML = '';
-      player.style.backgroundImage = `url('sprites/${currentMode}.png')`;
-    } else {
-      player.style.backgroundImage = 'none';
-      player.innerHTML = cfg.emoji;
-    }
+    // Siempre carga los sprites locales por defecto
+    player.innerHTML = '';
+    player.style.backgroundImage = `url('sprites/${currentMode}.png')`;
 
     // Configurar Motor de Gravedad inicial
     baseY_px = (parseFloat(cfg.bottomPos) / 100) * window.innerHeight;
