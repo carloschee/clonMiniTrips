@@ -21,10 +21,11 @@
     --ground-dark: #4E9B35;
     --water: #3A9FD8;
     --water-dark: #2278A8;
+    --dirt: #A0522D;
+    --dirt-dark: #8B4513;
     --sand: #F5D77A;
     --cloud: #FFFFFF;
     --sun: #FFD93D;
-    --star: #FFE566;
     --ui-bg: #FFF8EC;
     --ui-shadow: rgba(0,0,0,0.18);
     --btn-green: #5DD15A;
@@ -51,7 +52,7 @@
     overflow: hidden;
     font-family: 'Nunito', sans-serif;
     background-color: var(--sky-top);
-    touch-action: none; /* Previene gestos nativos del navegador */
+    touch-action: none;
   }
 
   h1, h2, h3 {
@@ -70,7 +71,6 @@
     display: none;
     flex-direction: column;
     align-items: center;
-    /* Respetar el notch y la barra inferior del iPhone 13 */
     padding-top: env(safe-area-inset-top, 47px);
     padding-bottom: env(safe-area-inset-bottom, 34px);
     background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
@@ -105,17 +105,20 @@
 
   .mode-selector {
     display: flex;
-    gap: 15px;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
     margin-bottom: 20px;
+    max-width: 90%;
   }
 
   .mode-btn {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border-radius: 20px;
     border: none;
     background: white;
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     box-shadow: 0 6px 0 var(--sky-bottom);
     cursor: pointer;
     transition: transform 0.1s;
@@ -193,7 +196,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    z-index: 20;
+    z-index: 50;
   }
 
   .back-btn {
@@ -246,11 +249,101 @@
     z-index: 2;
   }
 
+  /* CONTENEDOR DE PISTA DINÁMICA */
+  #track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 15; /* Detrás del jugador, pero encima del fondo */
+  }
+
+  /* Elementos de la Pista */
+  .start-line, .finish-line {
+    position: absolute;
+    width: 20px;
+    height: 140px;
+    background: repeating-linear-gradient(0deg, #fff, #fff 15px, #000 15px, #000 30px);
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.2);
+    border-radius: 5px 5px 0 0;
+  }
+  
+  .start-line::after {
+    content: 'INICIO';
+    position: absolute;
+    bottom: 150px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: white;
+    text-shadow: 0 4px 0 rgba(0,0,0,0.3), 0 0 15px var(--btn-green);
+  }
+
+  .finish-line::after {
+    content: 'META';
+    position: absolute;
+    bottom: 150px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: white;
+    text-shadow: 0 4px 0 rgba(0,0,0,0.3), 0 0 15px var(--btn-orange);
+  }
+
+  .finish-line::before {
+    content: '🏁';
+    position: absolute;
+    bottom: 190px;
+    font-size: 4rem;
+    filter: drop-shadow(0 4px 0 rgba(0,0,0,0.3));
+  }
+
+  .track-marker {
+    position: absolute;
+    background: var(--btn-blue);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    border: 4px solid white;
+    box-shadow: 0 4px 0 var(--btn-blue-dark), 0 6px 10px rgba(0,0,0,0.2);
+    transform: translateX(-50%);
+  }
+
+  .track-marker::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    width: 8px;
+    height: 35px;
+    background: #D7CCC8;
+    border: 2px solid #8D6E63;
+    border-top: none;
+    z-index: -1;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .track-decor {
+    position: absolute;
+    font-size: 3.5rem;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+  }
+
+  /* JUGADOR */
   #player {
     position: absolute;
     bottom: 20%;
     left: 50%;
-    /* Variable para controlar la dirección en la que mira el sprite/emoji */
     --facing: 1;
     transform: translateX(-50%) scaleX(var(--facing));
     font-size: 5rem;
@@ -261,7 +354,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Para cuando se usan sprites de imagen */
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -276,7 +368,7 @@
     font-weight: 900;
     font-size: 1.4rem;
     pointer-events: none;
-    z-index: 15;
+    z-index: 40;
     text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
     transition: opacity 0.3s;
   }
@@ -339,6 +431,7 @@
 
     <div class="mode-selector">
       <button class="mode-btn selected" data-mode="coche" onclick="selectMode('coche', this)">🚗</button>
+      <button class="mode-btn" data-mode="tren" onclick="selectMode('tren', this)">🚂</button>
       <button class="mode-btn" data-mode="barco" onclick="selectMode('barco', this)">⛵</button>
       <button class="mode-btn" data-mode="avion" onclick="selectMode('avion', this)">✈️</button>
     </div>
@@ -351,7 +444,7 @@
         Usar Sprites Locales
       </label>
       <div class="sprite-hint">
-        (Carpeta "sprites/": coche.png, barco.png, avion.png)
+        (Carpeta "sprites/": coche.png, tren.png, barco.png, avion.png)
       </div>
     </div>
   </div>
@@ -369,6 +462,8 @@
       <div class="scenery" id="scenery"></div>
     </div>
 
+    <div id="track"></div>
+
     <div id="player" style="animation: float 2s infinite ease-in-out;">🚗</div>
 
     <div class="instructions" id="game-hints">
@@ -385,8 +480,7 @@
   </div>
 
 <script>
-  // --- INYECCIÓN DE MANIFEST PWA EN TIEMPO DE EJECUCIÓN ---
-  // Esto hace que el navegador lo detecte como instalable sin necesidad de un archivo extra.
+  // --- INYECCIÓN DE MANIFEST PWA ---
   const manifestJSON = {
     "name": "Mini Trips",
     "short_name": "Mini Trips",
@@ -402,20 +496,18 @@
       }
     ]
   };
-  const manifestData = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
   const linkManifest = document.createElement('link');
   linkManifest.rel = 'manifest';
-  linkManifest.href = manifestData;
+  linkManifest.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestJSON));
   document.head.appendChild(linkManifest);
-  // --------------------------------------------------------
 
   // --- VARIABLES DEL JUEGO ---
   let currentMode = 'coche';
   let isRunning = false;
   let progress = 0; // 0 a 100
   let speed = 0;
-  let maxSpeed = 25; // Aumentado para permitir aceleración rápida
-  let mediumSpeed = 4; // Velocidad de avance al mantener tocado
+  let maxSpeed = 25; 
+  let mediumSpeed = 4;
   let distanceScrolled = 0;
   let startTime = 0;
   let gameLoopReq;
@@ -426,6 +518,9 @@
   let lastTouchX = 0;
   let lastTouchTime = 0;
 
+  // Longitud de la pista física (Niveles 10x más largos)
+  const TRACK_LENGTH = 20000;
+
   // Configuración por modo de transporte
   const config = {
     coche: { 
@@ -433,25 +528,36 @@
       envColor: 'var(--ground)', 
       borderColor: 'var(--ground-dark)', 
       bottomPos: '25%',
-      particleColors: ['#FFD93D', '#FFFFFF', '#AAAAAA']
+      particleColors: ['#FFD93D', '#FFFFFF', '#AAAAAA'],
+      decor: ['🌲', '🌳', '🪨', '🍄', '🌻', '🛑', '🪵']
+    },
+    tren: { 
+      emoji: '🚂', 
+      envColor: 'var(--dirt)', 
+      borderColor: 'var(--dirt-dark)', 
+      bottomPos: '25%',
+      particleColors: ['#555555', '#333333', '#888888', '#FFD93D'],
+      decor: ['🌵', '🛖', '⛰️', '🐄', '🤠', '🛤️', '🪨']
     },
     barco: { 
       emoji: '⛵', 
       envColor: 'var(--water)', 
       borderColor: 'var(--water-dark)', 
       bottomPos: '35%',
-      particleColors: ['#FFFFFF', '#B8E4F9', '#4FC3F7']
+      particleColors: ['#FFFFFF', '#B8E4F9', '#4FC3F7'],
+      decor: ['🌊', '🏝️', '🛟', '🐟', '⛵', '🐙', '⚓']
     },
     avion: { 
       emoji: '✈️', 
       envColor: 'transparent', 
       borderColor: 'transparent', 
       bottomPos: '60%',
-      particleColors: ['#FFFFFF', '#FFFFFF', '#B8E4F9']
+      particleColors: ['#FFFFFF', '#FFFFFF', '#B8E4F9'],
+      decor: ['☁️', '🦅', '🎈', '⛅', '✨', '🛸', '🚁']
     }
   };
 
-  // --- LÓGICA DE INTERFAZ ---
+  // --- LÓGICA DE INTERFAZ Y PISTA ---
 
   function selectMode(mode, btnElement) {
     currentMode = mode;
@@ -467,13 +573,72 @@
     document.getElementById('home-screen').classList.add('active');
   }
 
-  // Evento Botón Atrás
-  document.getElementById('back-btn').addEventListener('click', () => {
-    goHome();
-  });
+  document.getElementById('back-btn').addEventListener('click', goHome);
+
+  function generateTrack() {
+    const track = document.getElementById('track');
+    track.innerHTML = ''; // Limpiar pista
+    const cfg = config[currentMode];
+    const bottom = cfg.bottomPos;
+
+    // 1. Línea de Inicio
+    const start = document.createElement('div');
+    start.className = 'start-line';
+    start.style.left = '0px';
+    start.style.bottom = bottom;
+    track.appendChild(start);
+
+    // 2. Línea de Meta
+    const finish = document.createElement('div');
+    finish.className = 'finish-line';
+    finish.style.left = TRACK_LENGTH + 'px';
+    finish.style.bottom = bottom;
+    track.appendChild(finish);
+
+    // 3. Marcadores de Regresiva (del 10 al 1 distribuidos equitativamente)
+    for (let i = 1; i <= 10; i++) {
+        const marker = document.createElement('div');
+        marker.className = 'track-marker';
+        marker.innerText = (11 - i); // Etiqueta: 10 descendiendo a 1
+        
+        // Calcular posición en porcentaje (dividido en 11 segmentos para poner 10 en medio)
+        const progressPct = i * (100 / 11); 
+        marker.style.left = (TRACK_LENGTH * (progressPct / 100)) + 'px';
+        marker.style.bottom = `calc(${bottom} + 35px)`; // Ajuste para que el palo toque el suelo
+        track.appendChild(marker);
+    }
+
+    // 4. Elementos Decorativos Aleatorios
+    const items = cfg.decor;
+    const numDecor = 80; // Cantidad de decoraciones a generar
+    
+    for (let i = 0; i < numDecor; i++) {
+        const el = document.createElement('div');
+        el.className = 'track-decor';
+        el.innerText = items[Math.floor(Math.random() * items.length)];
+        
+        // Posición aleatoria evitando que tapen las líneas de inicio y meta
+        const pos = 600 + Math.random() * (TRACK_LENGTH - 1200);
+        el.style.left = pos + 'px';
+        
+        // Dispersión vertical
+        let vOffset = (Math.random() - 0.5) * 60; 
+        if (currentMode === 'avion') {
+            vOffset = (Math.random() - 0.4) * 300; // El avión tiene más espacio aéreo
+        }
+        
+        el.style.bottom = `calc(${bottom} + ${vOffset}px)`;
+        
+        // Escala y Profundidad aleatorias
+        const scale = 0.6 + Math.random() * 1.2;
+        el.style.transform = `translateX(-50%) scale(${scale})`;
+        el.style.zIndex = Math.random() > 0.5 ? 20 : 35; // Frente o detrás del jugador
+        
+        track.appendChild(el);
+    }
+  }
 
   function startGame() {
-    // Configurar entorno y jugador
     const env = document.getElementById('environment');
     const player = document.getElementById('player');
     const cfg = config[currentMode];
@@ -482,19 +647,19 @@
     env.style.background = cfg.envColor;
     env.style.borderTopColor = cfg.borderColor;
     player.style.bottom = cfg.bottomPos;
-    player.style.setProperty('--facing', '1'); // Resetear dirección hacia la derecha
+    player.style.setProperty('--facing', '1');
 
-    // Lógica para cargar Emojis o Sprites locales
     if (useSprites) {
       player.innerHTML = '';
-      // Se asume la existencia de la carpeta 'sprites/' junto a este index.html
       player.style.backgroundImage = `url('sprites/${currentMode}.png')`;
     } else {
       player.style.backgroundImage = 'none';
       player.innerHTML = cfg.emoji;
     }
 
-    // Reiniciar variables
+    // Generar nuevo nivel
+    generateTrack();
+
     progress = 0;
     speed = 0;
     distanceScrolled = 0;
@@ -504,20 +669,16 @@
     startTime = Date.now();
     isRunning = true;
 
-    // Cambiar pantallas
     document.getElementById('home-screen').classList.remove('active');
     document.getElementById('game-screen').classList.add('active');
 
     gameLoop();
   }
 
-  // --- LÓGICA DE JUEGO PRINCIPAL Y CONTROLES TÁCTILES ---
-
+  // --- CONTROLES TÁCTILES ---
   const gameScreen = document.getElementById('game-screen');
   
-  const hideHints = () => {
-    document.getElementById('game-hints').style.opacity = '0';
-  };
+  const hideHints = () => { document.getElementById('game-hints').style.opacity = '0'; };
 
   gameScreen.addEventListener('pointerdown', (e) => {
     if (!isRunning || e.target.id === 'back-btn') return;
@@ -530,26 +691,20 @@
 
   gameScreen.addEventListener('pointermove', (e) => {
     if (!isRunning || !isTouching) return;
-    
     const now = Date.now();
     const dt = now - lastTouchTime;
     touchX = e.clientX;
     
-    // Calcular velocidad del deslizamiento (swipe)
     if (dt > 0) {
       const swipeVelocity = (touchX - lastTouchX) / dt;
-      // Inyectar impulso extra a la velocidad basado en el deslizamiento
-      speed += swipeVelocity * 6; // Sensibilidad del swipe
+      speed += swipeVelocity * 6; // Sensibilidad del acelerón
     }
     
     lastTouchX = touchX;
     lastTouchTime = now;
   });
 
-  const endTouch = () => {
-    isTouching = false;
-  };
-
+  const endTouch = () => { isTouching = false; };
   gameScreen.addEventListener('pointerup', endTouch);
   gameScreen.addEventListener('pointercancel', endTouch);
   gameScreen.addEventListener('pointerleave', endTouch);
@@ -564,7 +719,6 @@
     p.style.background = c[Math.floor(Math.random() * c.length)];
     p.style.width = p.style.height = (8 + Math.random() * 6) + 'px';
     
-    // Posicionar detrás del jugador según la dirección
     const offset = direction > 0 ? -25 : 25;
     const leftOffset = playerRect.left + (playerRect.width / 2) + offset + (Math.random() * 20 - 10);
     const bottomOffset = window.innerHeight - playerRect.bottom + (Math.random() * 20);
@@ -576,34 +730,26 @@
     setTimeout(() => p.remove(), 1000);
   }
 
+  // --- BUCLE PRINCIPAL ---
   function gameLoop() {
     if (!isRunning) return;
 
-    // --- FÍSICA Y MOVIMIENTO ---
     let targetSpeed = 0;
     const screenCenter = window.innerWidth / 2;
 
     if (isTouching) {
-      // Velocidad media constante al mantener tocado
       targetSpeed = (touchX > screenCenter) ? mediumSpeed : -mediumSpeed;
-      
-      // Acelerar suavemente hacia la velocidad media si vamos más lento
       if (targetSpeed > 0 && speed < targetSpeed) speed += 0.5;
       if (targetSpeed < 0 && speed > targetSpeed) speed -= 0.5;
     }
 
-    // Fricción constante para que los impulsos se desaceleren suavemente
-    speed *= 0.93;
-
-    // Limitar velocidad máxima
+    speed *= 0.93; // Fricción
     if (speed > maxSpeed) speed = maxSpeed;
     if (speed < -maxSpeed) speed = -maxSpeed;
-    
-    // Detener por completo si va muy lento y no se está tocando
     if (!isTouching && Math.abs(speed) < 0.2) speed = 0;
 
-    // Progreso (limitado para no retroceder antes del inicio ni pasar del fin)
-    progress += speed * 0.05;
+    // Progresión 10 veces más lenta que antes (0.005 vs 0.05) para un juego más largo
+    progress += speed * 0.005; 
     if (progress < 0) progress = 0; 
     
     if (progress >= 100) {
@@ -611,24 +757,23 @@
       winGame();
     }
     
-    // Actualizar UI de progreso
     document.getElementById('progress-fill').style.width = progress + '%';
 
-    // Animación infinita del escenario
+    // Movimiento visual de la pista (calculado en base al progreso real y longitud)
+    const trackX = screenCenter - (progress / 100) * TRACK_LENGTH;
+    document.getElementById('track').style.transform = `translateX(${trackX}px)`;
+
+    // Movimiento infinito del piso de fondo
     distanceScrolled += speed * 2;
-    // Cálculo seguro del módulo para números negativos
     const bgPos = ((distanceScrolled % window.innerWidth) + window.innerWidth) % window.innerWidth;
     document.getElementById('scenery').style.transform = `translateX(-${bgPos}px)`;
 
-    // Orientación visual del jugador según la inercia (voltear a la izquierda/derecha)
+    // Volteo visual del jugador
     const player = document.getElementById('player');
-    if (speed < -0.5) {
-      player.style.setProperty('--facing', '-1');
-    } else if (speed > 0.5) {
-      player.style.setProperty('--facing', '1');
-    }
+    if (speed < -0.5) player.style.setProperty('--facing', '-1');
+    else if (speed > 0.5) player.style.setProperty('--facing', '1');
 
-    // Generar partículas dinámicamente cuando hay altas velocidades
+    // Partículas de alta velocidad
     if (Math.abs(speed) > mediumSpeed * 1.5 && Math.random() > 0.6) {
       spawnParticle(Math.sign(speed));
     }
