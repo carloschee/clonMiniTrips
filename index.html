@@ -466,7 +466,7 @@
 
     <div id="track"></div>
 
-    <div id="player" style="animation: float 2s infinite ease-in-out;">🚗</div>
+    <div id="player">🚗</div>
 
     <div class="instructions" id="game-hints">
       Toca los lados para avanzar.<br>¡Desliza rápido para acelerar!
@@ -1001,6 +1001,8 @@
       } else {
         rotationAngle = ySpeed * 1.5; // Inclinación dinámica al deslizar arriba/abajo en pleno vuelo
       }
+    } else if (currentMode === 'barco') {
+      rotationAngle = ySpeed * 1.5; // Inclinación natural al rebotar en el agua
     }
 
     // Volteo visual e inclinación del jugador
