@@ -134,9 +134,9 @@
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
     
-    /* Configuración del Spritesheet para botones */
-    background-image: url('IMG_2880.jpg');
-    background-size: 200% 200%;
+    /* Configuración para sprites individuales PNG */
+    background-size: 80%; /* Deja un pequeño margen dentro del botón */
+    background-position: center;
     background-repeat: no-repeat;
   }
 
@@ -310,7 +310,7 @@
     position: absolute;
     bottom: 20%;
     left: 50%;
-    --facing: -1; /* Asumimos que los dibujos originales miran a la izquierda */
+    --facing: -1; 
     transform: translateX(-50%) scaleX(var(--facing));
     z-index: 30;
     
@@ -322,11 +322,10 @@
     box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     background-color: white;
     
-    /* Configuración Spritesheet */
-    background-image: url('IMG_2880.jpg');
-    background-size: 200% 200%;
+    /* Configuración para PNG individual */
+    background-size: 80%;
+    background-position: center;
     background-repeat: no-repeat;
-    background-position: 0% 0%; /* Por defecto coche */
   }
 
   .instructions {
@@ -409,11 +408,11 @@
       <h1>Mini Trips!</h1>
     </div>
     <div class="mode-selector">
-      <!-- Los botones ahora usan la imagen como fondo (spritesheet) -->
-      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-position: 0% 0%;"></button>
-      <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-position: 100% 0%;"></button>
-      <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-position: 0% 100%;"></button>
-      <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')" style="background-position: 100% 100%;"></button>
+      <!-- Botones enlazados a la carpeta "sprites" -->
+      <button class="mode-btn" data-mode="coche" onpointerdown="selectMode('coche')" style="background-image: url('sprites/auto.png');"></button>
+      <button class="mode-btn" data-mode="tren" onpointerdown="selectMode('tren')" style="background-image: url('sprites/tren.png');"></button>
+      <button class="mode-btn" data-mode="barco" onpointerdown="selectMode('barco')" style="background-image: url('sprites/barco.png');"></button>
+      <button class="mode-btn" data-mode="avion" onpointerdown="selectMode('avion')" style="background-image: url('sprites/avion.png');"></button>
     </div>
   </div>
 
@@ -482,10 +481,10 @@
   let terrainSeedsBg = null; 
   const TRACK_LENGTH = 20000; 
 
-  // --- CONFIGURACIÓN DE MODOS (CON POSICIONES DEL SPRITESHEET) ---
+  // --- CONFIGURACIÓN DE MODOS (RUTAS A SPRITES INDIVIDUALES) ---
   const config = {
     coche: { 
-      bgPos: '0% 0%', bottomPos: '25%',
+      spriteUrl: 'sprites/auto.png', bottomPos: '25%',
       skyTop: '#6CB2EB', skyBottom: '#BBE3FA',
       fgColor: '#6BBF4E', fgStroke: '#4E9B35', fgFill: '#5DAF42',
       bgColor: '#86CD6A', bgStroke: 'none', bgFill: '#79BC5F',     
@@ -495,7 +494,7 @@
       decorFar: ['☁️', '☀️', '🦅', '⛰️']
     },
     tren: { 
-      bgPos: '100% 0%', bottomPos: '25%',
+      spriteUrl: 'sprites/tren.png', bottomPos: '25%',
       skyTop: '#FF9A9E', skyBottom: '#FECFEF', 
       fgColor: '#A0522D', fgStroke: '#6D381D', fgFill: '#8A4525', 
       bgColor: '#C2754E', bgStroke: '#995635', bgFill: '#B2623C', 
@@ -505,7 +504,7 @@
       decorFar: ['☁️', '⛅', '🌅', '🏜️']
     },
     barco: { 
-      bgPos: '0% 100%', bottomPos: '35%',
+      spriteUrl: 'sprites/barco.png', bottomPos: '35%',
       skyTop: '#40C4FF', skyBottom: '#E1F5FE',
       particleColors: ['#FFFFFF', '#B8E4F9', '#4FC3F7'],
       decorNear: ['🛟', '🐟', '🐙', '⚓', '🐬'],
@@ -513,7 +512,7 @@
       decorFar: ['☁️', '☀️', '🦅', '☁️']
     },
     avion: { 
-      bgPos: '100% 100%', bottomPos: '60%',
+      spriteUrl: 'sprites/avion.png', bottomPos: '60%',
       skyTop: '#1E88E5', skyBottom: '#90CAF9',
       particleColors: ['#FFFFFF', '#FFFFFF', '#B8E4F9'],
       decorNear: ['🦅', '🎈', '🚁', '✨'],
@@ -707,8 +706,8 @@
     const player = document.getElementById('player');
     const cfg = config[currentMode];
 
-    // Asignar el sprite correspondiente basado en la posición definida en cfg
-    player.style.backgroundPosition = cfg.bgPos;
+    // Asignar el fondo PNG individual al jugador
+    player.style.backgroundImage = `url('${cfg.spriteUrl}')`;
 
     terrainSeeds = {
       a1: 40 + Math.random() * 40, f1: 500 + Math.random() * 500,
